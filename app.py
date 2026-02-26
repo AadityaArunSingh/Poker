@@ -217,7 +217,7 @@ df = load_data()
 # ── Sidebar — Filters ─────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<div class="sidebar-heading">♠ Filters</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sidebar-sub">Adjust your view</div>', unsafe_allow_html=True)
+    # st.markdown('<div class="sidebar-sub">Adjust your view</div>', unsafe_allow_html=True)
 
     all_players = sorted(df["Name"].unique())
     all_dates = sorted(df["Date"].dt.date.unique())
@@ -260,7 +260,7 @@ else:
 
 # ── Hero header ───────────────────────────────────────────────────────────────
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-title">POKER NIGHT</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-title">जुआरी NIGHT</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">Gambling addiction tracker</div>', unsafe_allow_html=True)
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
