@@ -1,8 +1,13 @@
 import streamlit as st
 import pandas as pd
 
-data = 'https://docs.google.com/spreadsheets/d/1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ/edit?usp=sharing'
+# Use your PUBLISHED CSV link here
+DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1v.../pub?output=csv"
 
-df = pd.read_csv(data)
+# Pipeline: Read the CSV data into a DataFrame
+df = pd.read_csv(DATA_URL)
 
-st.table(data=df)
+st.title("Poker Data Test")
+
+# Display the actual data frame
+st.table(df)
