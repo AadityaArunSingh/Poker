@@ -15,11 +15,13 @@
 # example/st_app.py
 
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
+import pandas as pd
+# from streamlit_gsheets import GSheetsConnection
 
-url = "https://docs.google.com/spreadsheets/d/1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ/edit?usp=sharing"
+# url = "https://docs.google.com/spreadsheets/d/1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ/edit?usp=sharing"
 
-conn = st.connection("gsheets", type=GSheetsConnection)
+# conn = st.connection("gsheets", type=GSheetsConnection)
 
-data = conn.read(spreadsheet=url, worksheet="0")
-st.dataframe(data)
+# data = conn.read(spreadsheet=url, worksheet="0")
+df = pd.read_csv('/Users/aadityasingh/Developer/Coding/Poker/poker.csv')
+st.dataframe(df)
