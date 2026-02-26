@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 st.set_page_config(
-    page_title="🃏 Poker Dashboard",
+    page_title="🃏 जुआरी Dashboard",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -261,7 +261,7 @@ else:
 # ── Hero header ───────────────────────────────────────────────────────────────
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">POKER NIGHT</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-subtitle">The lads · Season tracker</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-subtitle">Gambling addiction tracker</div>', unsafe_allow_html=True)
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
 # ── KPI Cards ─────────────────────────────────────────────────────────────────
@@ -274,10 +274,10 @@ biggest_loser  = total_pl.idxmin() if not total_pl.empty else "N/A"
 most_active    = sessions_per_player.idxmax() if not sessions_per_player.empty else "N/A"
 
 k1, k2, k3, k4 = st.columns(4)
-k1.metric("♠ Biggest Winner", biggest_winner, f"£{total_pl.get(biggest_winner, 0):+.0f}")
-k2.metric("♥ Biggest Fish",   biggest_loser,  f"£{total_pl.get(biggest_loser, 0):+.0f}")
-k3.metric("♦ Sessions Played", sessions_count)
-k4.metric("♣ Most Active",    most_active,    f"{sessions_per_player.get(most_active, 0)} sessions")
+k1.metric("♠ All time GOAT", biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
+k2.metric("♥ Biggest Spender",   biggest_loser,  f"₹{total_pl.get(biggest_loser, 0):+.0f}")
+k3.metric("♦ Sessions Tracked", sessions_count)
+k4.metric("♣ Most Unemployed",    most_active,    f"{sessions_per_player.get(most_active, 0)} sessions")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -298,11 +298,11 @@ with c1:
         x=leaderboard["Player"],
         y=leaderboard["Total P/L"],
         marker_color=leaderboard["colour"],
-        text=leaderboard["Total P/L"].apply(lambda x: f"£{x:+.0f}"),
+        text=leaderboard["Total P/L"].apply(lambda x: f"₹{x:+.0f}"),
         textposition="outside",
         textfont=dict(color="#aaa", size=10),
     ))
-    fig_bar.update_layout(**PLOTLY_LAYOUT, yaxis_title="P/L (£)")
+    fig_bar.update_layout(**PLOTLY_LAYOUT, yaxis_title="P/L (₹)")
     chart_card("♠ All-Time P/L Leaderboard", fig_bar, "bar")
 
 with c2:
@@ -315,7 +315,7 @@ with c2:
         df_cum, x="Date", y="P/L", color="Name", markers=True,
         color_discrete_sequence=["#cc0000","#ff4444","#ff8888","#ff6666","#aa0000","#dd2222","#ff2222","#990000"]
     )
-    fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (£)")
+    fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
 
 # ── Charts Row 2 ──────────────────────────────────────────────────────────────
@@ -357,7 +357,7 @@ with c4:
         y=pivot.index.tolist(),
         colorscale=[[0, "#4a0000"], [0.5, "#1a1a1a"], [1, "#cc0000"]],
         text=pivot.values,
-        texttemplate="£%{text:.0f}",
+        texttemplate="₹%{text:.0f}",
         textfont=dict(size=10, color="#ddd"),
         zmid=0,
     ))
