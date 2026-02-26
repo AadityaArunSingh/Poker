@@ -24,8 +24,8 @@ def load_data():
 df = load_data()
 
 # ── Header ───────────────────────────────────────────────────────────────────
-st.title("🃏 Poker Night Dashboard")
-st.caption("Data auto-refreshes every 5 minutes from Google Sheets")
+st.title("🃏 जुआरी Dashboard")
+st.caption("We are not addicted to gambling.")
 
 # Reload button
 if st.button("🔄 Refresh Data"):
@@ -71,10 +71,10 @@ total_sessions_per_player = df_filtered.groupby("Name")["Date"].nunique()
 most_active = total_sessions_per_player.idxmax() if not total_sessions_per_player.empty else "N/A"
 
 k1, k2, k3, k4 = st.columns(4)
-k1.metric("🏆 Biggest Winner", biggest_winner, f"£{total_pl.get(biggest_winner, 0):+.0f}")
-k2.metric("💸 Biggest Loser",  biggest_loser,  f"£{total_pl.get(biggest_loser, 0):+.0f}")
+k1.metric("🐐 GOAT", biggest_winner, f"£{total_pl.get(biggest_winner, 0):+.0f}")
+k2.metric("💸 Biggest Spender",  biggest_loser,  f"£{total_pl.get(biggest_loser, 0):+.0f}")
 k3.metric("🎮 Sessions Tracked", sessions)
-k4.metric("🔥 Most Active", most_active, f"{total_sessions_per_player.get(most_active, 0)} sessions")
+k4.metric("🔥 Most Unemployed", most_active, f"{total_sessions_per_player.get(most_active, 0)} sessions")
 
 st.divider()
 
