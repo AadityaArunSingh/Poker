@@ -9,7 +9,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Global CSS ────────────────────────────────────────────────────────────────
+# CSS
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap');
@@ -185,7 +185,7 @@ html, body, [class*="css"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ── Plotly dark template ──────────────────────────────────────────────────────
+# Dark template
 PLOTLY_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
@@ -196,11 +196,11 @@ PLOTLY_LAYOUT = dict(
     yaxis=dict(gridcolor="#1a1a1a", linecolor="#333", tickcolor="#333"),
 )
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# Config
 SHEET_ID = "1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ"
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-# ── Load data ─────────────────────────────────────────────────────────────────
+# Data loading
 @st.cache_data(ttl=300)
 def load_data():
     df = pd.read_csv(CSV_URL)
@@ -214,7 +214,7 @@ def load_data():
 
 df = load_data()
 
-# ── Sidebar — Filters ─────────────────────────────────────────────────────────
+# filters
 with st.sidebar:
     st.markdown('<div class="sidebar-heading">♠ Filters</div>', unsafe_allow_html=True)
     # st.markdown('<div class="sidebar-sub">Adjust your view</div>', unsafe_allow_html=True)
@@ -247,7 +247,7 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-# ── Apply filters ─────────────────────────────────────────────────────────────
+# apply filters 
 if len(date_range) == 2:
     start, end = date_range
     df_f = df[
@@ -258,13 +258,13 @@ if len(date_range) == 2:
 else:
     df_f = df[df["Name"].isin(selected_players)]
 
-# ── Hero header ───────────────────────────────────────────────────────────────
+# Hero Header
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">JUAARI DASHBOARD</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">Gambling addiction tracker</div>', unsafe_allow_html=True)
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
-# ── KPI Cards ─────────────────────────────────────────────────────────────────
+# KPI
 total_pl = df_f.groupby("Name")["P/L"].sum()
 sessions_per_player = df_f.groupby("Name")["Date"].nunique()
 sessions_count = df_f["Date"].nunique()
@@ -281,13 +281,13 @@ k4.metric("♣ Most Unemployed",    most_active,    f"{sessions_per_player.get(m
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# ── Helper: wrap a plotly chart in a styled card ──────────────────────────────
+# wrapper for plotly viz inside a card
 def chart_card(title, fig, key):
     st.markdown(f'<div class="chart-card"><div class="chart-card-title">{title}</div>', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True, key=key)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Charts Row 1 ──────────────────────────────────────────────────────────────
+# charts on row 1
 c1, c2 = st.columns(2)
 
 with c1:
@@ -318,7 +318,7 @@ with c2:
     fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
 
-# ── Charts Row 2 ──────────────────────────────────────────────────────────────
+# charts on row 2
 c3, c4 = st.columns(2)
 
 with c3:
@@ -364,7 +364,7 @@ with c4:
     fig_heat.update_layout(**PLOTLY_LAYOUT)
     chart_card("♣ Session Heatmap", fig_heat, "heat")
 
-# ── Session breakdown ─────────────────────────────────────────────────────────
+# sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
 sessions_list = sorted(df_f["Date"].dt.date.unique(), reverse=True)
@@ -392,6 +392,6 @@ st.dataframe(
 )
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Raw data ──────────────────────────────────────────────────────────────────
+# raw
 with st.expander("📋 Full Raw Data"):
     st.dataframe(df_f.sort_values("Date", ascending=False).reset_index(drop=True), use_container_width=True)
