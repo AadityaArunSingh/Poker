@@ -325,67 +325,89 @@ with c2:
 c3, c4 = st.columns(2)
 
 with c3:
-    # Radar/spider chart — greediness vs P/L per player
     all_p = sorted(df_f["Name"].unique())
 
-    # Avg buy-in units per session (greediness score)
+    # Total buy-in units per player (greediness)
     greed = df_f.groupby(["Name", "Date"])["Buyin"].sum().reset_index()
     greed["Units"] = greed["Buyin"] / 200
-    avg_units = greed.groupby("Name")["Units"].mean()
+    total_units = greed.groupby("Name")["Units"].sum().reindex(all_p, fill_value=0)
 
-    # Total P/L
-    total_pl_radar = df_f.groupby("Name")["P/L"].sum()
+    # Total P/L per player — shift to positive scale for radar
+    total_pl_radar = df_f.groupby("Name")["P/L"].sum().reindex(all_p, fill_value=0)
+    pl_shifted = total_pl_radar - total_pl_radar.min()  # shift so min = 0
 
-    # Normalise both axes to 0–100 so they sit on the same radar scale
-    def normalise(series):
-        mn, mx = series.min(), series.max()
-        if mx == mn:
-            return series * 0 + 50  # all same value → put in middle
-        return (series - mn) / (mx - mn) * 100
+    # Normalise both to 0–100 on same scale so polygons are comparable
+    max_val = max(total_units.max(), pl_shifted.max()) or 1
+    greed_scaled = (total_units / max_val * 100).round(1)
+    pl_scaled    = (pl_shifted  / max_val * 100).round(1)
 
-    greed_norm = normalise(avg_units.reindex(all_p, fill_value=0))
-    pl_norm    = normalise(total_pl_radar.reindex(all_p, fill_value=0))
-
-    categories = ["Greediness", "P/L Performance"]
+    # Close the polygon by repeating first value
+    theta = all_p + [all_p[0]]
+    greed_r = list(greed_scaled) + [greed_scaled.iloc[0]]
+    pl_r    = list(pl_scaled)    + [pl_scaled.iloc[0]]
 
     fig_radar = go.Figure()
-    PLAYER_COLOURS = [
-        "#3498db","#2ecc71","#f39c12","#9b59b6",
-        "#1abc9c","#e67e22","#e74c3c","#f1c40f"
-    ]
-    for i, player in enumerate(all_p):
-        values = [greed_norm[player], pl_norm[player]]
-        values_closed = values + [values[0]]  # close the polygon
-        fig_radar.add_trace(go.Scatterpolar(
-            r=values_closed,
-            theta=categories + [categories[0]],
-            fill="toself",
-            fillcolor="rgba(0,0,0,0.1)",
-            line=dict(color=PLAYER_COLOURS[i % len(PLAYER_COLOURS)], width=2),
-            name=player,
-            hovertemplate=(
-                f"<b>{player}</b><br>"
-                f"Greediness: {greed_norm[player]:.0f}/100<br>"
-                f"P/L Score: {pl_norm[player]:.0f}/100<br>"
-                f"Avg buy-ins/session: {avg_units.get(player, 0):.1f}×<br>"
-                f"Total P/L: ₹{total_pl_radar.get(player, 0):+.0f}"
-                "<extra></extra>"
-            ),
-        ))
+
+    # Green polygon — Greediness (buy-in units)
+    fig_radar.add_trace(go.Scatterpolar(
+        r=greed_r,
+        theta=theta,
+        fill="toself",
+        fillcolor="rgba(100,220,100,0.15)",
+        line=dict(color="#64dc64", width=2),
+        name="Buy-in Units",
+        hovertemplate="<b>%{theta}</b><br>Buy-in units: " +
+            "<br>".join([f"{p}: {total_units[p]:.0f}×" for p in all_p]) +
+            "<extra></extra>",
+    ))
+
+    # Pink polygon — P/L performance
+    fig_radar.add_trace(go.Scatterpolar(
+        r=pl_r,
+        theta=theta,
+        fill="toself",
+        fillcolor="rgba(255,150,180,0.15)",
+        line=dict(color="#ff96b4", width=2),
+        name="P/L Performance",
+        hovertemplate="<b>%{theta}</b><br>P/L performance<extra></extra>",
+    ))
+
+    # Add per-player hover by adding invisible markers with full info
+    fig_radar.add_trace(go.Scatterpolar(
+        r=list(greed_scaled),
+        theta=all_p,
+        mode="markers",
+        marker=dict(size=8, color="#64dc64", opacity=0.8),
+        name="",
+        showlegend=False,
+        hovertemplate="<b>%{theta}</b><br>" +
+            "<br>".join([
+                f"{'%{theta}'} — Buy-ins: {total_units[p]:.0f}× | P/L: ₹{total_pl_radar[p]:+.0f}"
+                for p in all_p
+            ]) + "<extra></extra>",
+        customdata=[[f"{total_units[p]:.0f}×", f"₹{total_pl_radar[p]:+.0f}"] for p in all_p],
+    ))
+
+    fig_radar.update_traces(
+        hovertemplate="<b>%{theta}</b><br>Buy-ins: %{customdata[0]}<br>P/L: %{customdata[1]}<extra></extra>",
+        selector=dict(mode="markers"),
+    )
 
     fig_radar.update_layout(
         **PLOTLY_LAYOUT,
         polar=dict(
             bgcolor="rgba(0,0,0,0)",
             radialaxis=dict(
-                visible=True, range=[0, 100],
-                tickfont=dict(size=8, color="#555"),
+                visible=True,
+                range=[0, 100],
+                tickfont=dict(size=7, color="#444"),
                 gridcolor="#222",
                 linecolor="#333",
+                showticklabels=False,
             ),
             angularaxis=dict(
-                tickfont=dict(size=11, color="#aaa"),
-                gridcolor="#222",
+                tickfont=dict(size=12, color="#ddd"),
+                gridcolor="#1a1a1a",
                 linecolor="#333",
             ),
         ),
