@@ -312,8 +312,8 @@ with c2:
         .sum().groupby(level=1).cumsum().reset_index()
     )
     fig_line = px.line(
-        df_cum, x="Date", y="P/L", color="Name", markers=True,
-        color_discrete_sequence=["#cc0000","#ff4444","#ff8888","#ff6666","#aa0000","#dd2222","#ff2222","#990000"]
+    df_cum, x="Date", y="P/L", color="Name", markers=True,
+    color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e74c3c","#f1c40f"]
     )
     fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
@@ -393,5 +393,6 @@ st.dataframe(
 st.markdown("</div>", unsafe_allow_html=True)
 
 # raw
-with st.expander("📋 Full Raw Data"):
-    st.dataframe(df_f.sort_values("Date", ascending=False).reset_index(drop=True), use_container_width=True)
+# with st.expander("📋 Full Raw Data"):
+#     st.dataframe(df_f.sort_values("Date", ascending=False).reset_index(drop=True), use_container_width=True)
+
