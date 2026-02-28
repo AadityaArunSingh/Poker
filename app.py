@@ -360,7 +360,7 @@ with c3:
             r=values_closed,
             theta=categories + [categories[0]],
             fill="toself",
-            fillcolor=PLAYER_COLOURS[i % len(PLAYER_COLOURS)].replace(")", ",0.15)").replace("rgb", "rgba").replace("#", "rgba(") if "#" in PLAYER_COLOURS[i % len(PLAYER_COLOURS)] else PLAYER_COLOURS[i % len(PLAYER_COLOURS)],
+            fillcolor="rgba(0,0,0,0.1)",
             line=dict(color=PLAYER_COLOURS[i % len(PLAYER_COLOURS)], width=2),
             name=player,
             hovertemplate=(
