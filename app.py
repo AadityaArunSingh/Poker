@@ -327,39 +327,58 @@ c3, c4 = st.columns(2)
 with c3:
     all_p = sorted(df_f["Name"].unique())
 
-    # Total buy-in units per player (greediness)
+    # Average buy-in units per player across all sessions
     greed = df_f.groupby(["Name", "Date"])["Buyin"].sum().reset_index()
     greed["Units"] = greed["Buyin"] / 200
-    total_units = greed.groupby("Name")["Units"].sum().reindex(all_p, fill_value=0)
+    avg_units = greed.groupby("Name")["Units"].mean().reindex(all_p, fill_value=0)
 
     # Total cashout per player
     total_cashout = df_f.groupby("Name")["Cashout"].sum().reindex(all_p, fill_value=0)
 
-    # Normalise both to 0–100 on same scale so polygons are comparable
-    max_val = max(total_units.max(), total_cashout.max()) or 1
-    greed_scaled = (total_units   / max_val * 100).round(1)
-    pl_scaled    = (total_cashout / max_val * 100).round(1)
+    # Normalise cashout to 0–100
+    max_cashout = total_cashout.max() or 1
+    cashout_scaled = (total_cashout / max_cashout * 100).round(1)
 
-    # Close the polygon by repeating first value
-    theta  = all_p + [all_p[0]]
-    greed_r = list(greed_scaled) + [greed_scaled.iloc[0]]
-    pl_r    = list(pl_scaled)    + [pl_scaled.iloc[0]]
+    # Each ring represents one buy-in level (1×, 2×, 3×, 4×)
+    # A player contributes to ring N only if their avg >= N
+    MAX_RINGS = 4
+    theta = all_p + [all_p[0]]
 
     fig_radar = go.Figure()
 
-    # White polygon — Buy-in units
-    fig_radar.add_trace(go.Scatterpolar(
-        r=greed_r,
-        theta=theta,
-        fill="toself",
-        fillcolor="rgba(255,255,255,0.05)",
-        line=dict(color="#ffffff", width=2),
-        name="Buy-in Units",
-    ))
+    # Draw rings from outermost (4) to innermost (1) so inner rings render on top
+    ring_styles = {
+        4: dict(color="rgba(255,255,255,0.9)", fill="rgba(255,255,255,0.03)", width=2),
+        3: dict(color="rgba(255,255,255,0.7)", fill="rgba(255,255,255,0.05)", width=2),
+        2: dict(color="rgba(255,255,255,0.5)", fill="rgba(255,255,255,0.07)", width=2),
+        1: dict(color="rgba(255,255,255,0.3)", fill="rgba(255,255,255,0.10)", width=2),
+    }
 
-    # Red polygon — Cashout
+    for ring in range(MAX_RINGS, 0, -1):
+        # Player reaches this ring only if avg buy-ins >= ring level
+        r_vals = [
+            (ring / MAX_RINGS * 100) if avg_units[p] >= ring else 0
+            for p in all_p
+        ]
+        r_closed = r_vals + [r_vals[0]]
+        style = ring_styles[ring]
+        fig_radar.add_trace(go.Scatterpolar(
+            r=r_closed,
+            theta=theta,
+            fill="toself",
+            fillcolor=style["fill"],
+            line=dict(color=style["color"], width=style["width"]),
+            name=f"Avg {ring}× Buy-in",
+            hovertemplate=(
+                "<b>%{theta}</b><br>"
+                f"Reached {ring}× avg buy-in<extra></extra>"
+            ),
+        ))
+
+    # Red polygon — Cashout on top
+    cashout_r = list(cashout_scaled) + [cashout_scaled.iloc[0]]
     fig_radar.add_trace(go.Scatterpolar(
-        r=pl_r,
+        r=cashout_r,
         theta=theta,
         fill="toself",
         fillcolor="rgba(204,0,0,0.15)",
@@ -367,16 +386,23 @@ with c3:
         name="Cashout",
     ))
 
-    # Invisible markers for per-player hover tooltips
+    # Invisible markers for clean per-player hover
     fig_radar.add_trace(go.Scatterpolar(
-        r=list(greed_scaled),
+        r=list(cashout_scaled),
         theta=all_p,
         mode="markers",
-        marker=dict(size=8, color="#ffffff", opacity=0.8),
-        name="",
+        marker=dict(size=8, color="#cc0000", opacity=0.8),
         showlegend=False,
-        customdata=[[f"{total_units[p]:.0f}×", f"₹{total_cashout[p]:,.0f}"] for p in all_p],
-        hovertemplate="<b>%{theta}</b><br>Buy-ins: %{customdata[0]}<br>Cashout: %{customdata[1]}<extra></extra>",
+        customdata=[
+            [f"{avg_units[p]:.1f}×", f"₹{total_cashout[p]:,.0f}"]
+            for p in all_p
+        ],
+        hovertemplate=(
+            "<b>%{theta}</b><br>"
+            "Avg buy-ins: %{customdata[0]}<br>"
+            "Total cashout: %{customdata[1]}"
+            "<extra></extra>"
+        ),
     ))
 
     fig_radar.update_layout(
@@ -386,10 +412,9 @@ with c3:
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
-                tickfont=dict(size=7, color="#444"),
+                showticklabels=False,
                 gridcolor="#222",
                 linecolor="#333",
-                showticklabels=False,
             ),
             angularaxis=dict(
                 tickfont=dict(size=12, color="#ddd"),
