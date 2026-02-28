@@ -278,7 +278,7 @@ most_active    = sessions_per_player.idxmax() if not sessions_per_player.empty e
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("♠ All time GOAT", biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
 k2.metric("♥ Biggest Spender",   biggest_loser,  f"₹{total_pl.get(biggest_loser, 0):+.0f}")
-k3.metric("♦ Sessions Tracked", sessions_count)
+k3.metric("♦ Unbroken Streak", sessions_count)
 k4.metric("♣ Most Unemployed",    most_active,    f"{sessions_per_player.get(most_active, 0)} sessions")
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -315,9 +315,10 @@ with c2:
     )
     fig_line = px.line(
     df_cum, x="Date", y="P/L", color="Name", markers=True,
-    color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#1abc9c","#e67e22","#e74c3c","#f1c40f"]
+    color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#ffffff","#e67e22","#e74c3c","#f1c40f"]
     )
     fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
+    fig_line.update_layout(legend=dict(orientation="h", y=-0.25, x=0, xanchor="left"))
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
 
 # charts on row 2
