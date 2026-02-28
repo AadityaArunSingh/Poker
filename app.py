@@ -349,17 +349,13 @@ with c3:
             textposition="inside",
             textfont=dict(color="white", size=9),
         ))
-    fig_greed.update_layout(
-        **PLOTLY_LAYOUT,
-        barmode="stack",
-        yaxis_title="Sessions",
-        legend=dict(
-            bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#666", size=9),
-            orientation="h",
-            y=-0.2,
-        ),
-    )
+    fig_greed.update_layout(**PLOTLY_LAYOUT, barmode="stack", yaxis_title="Sessions")
+    fig_greed.update_layout(legend=dict(
+        bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#666", size=9),
+        orientation="h",
+        y=-0.2,
+    ))
     chart_card("♦ Greed Calculator", fig_greed, "greed")
 
 with c4:
