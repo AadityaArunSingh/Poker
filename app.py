@@ -332,66 +332,52 @@ with c3:
     greed["Units"] = greed["Buyin"] / 200
     total_units = greed.groupby("Name")["Units"].sum().reindex(all_p, fill_value=0)
 
-    # Total P/L per player — shift to positive scale for radar
-    total_pl_radar = df_f.groupby("Name")["P/L"].sum().reindex(all_p, fill_value=0)
-    pl_shifted = total_pl_radar - total_pl_radar.min()  # shift so min = 0
+    # Total cashout per player
+    total_cashout = df_f.groupby("Name")["Cashout"].sum().reindex(all_p, fill_value=0)
 
     # Normalise both to 0–100 on same scale so polygons are comparable
-    max_val = max(total_units.max(), pl_shifted.max()) or 1
-    greed_scaled = (total_units / max_val * 100).round(1)
-    pl_scaled    = (pl_shifted  / max_val * 100).round(1)
+    max_val = max(total_units.max(), total_cashout.max()) or 1
+    greed_scaled = (total_units   / max_val * 100).round(1)
+    pl_scaled    = (total_cashout / max_val * 100).round(1)
 
     # Close the polygon by repeating first value
-    theta = all_p + [all_p[0]]
+    theta  = all_p + [all_p[0]]
     greed_r = list(greed_scaled) + [greed_scaled.iloc[0]]
     pl_r    = list(pl_scaled)    + [pl_scaled.iloc[0]]
 
     fig_radar = go.Figure()
 
-    # Green polygon — Greediness (buy-in units)
+    # White polygon — Buy-in units
     fig_radar.add_trace(go.Scatterpolar(
         r=greed_r,
         theta=theta,
         fill="toself",
-        fillcolor="rgba(100,220,100,0.15)",
-        line=dict(color="#64dc64", width=2),
+        fillcolor="rgba(255,255,255,0.05)",
+        line=dict(color="#ffffff", width=2),
         name="Buy-in Units",
-        hovertemplate="<b>%{theta}</b><br>Buy-in units: " +
-            "<br>".join([f"{p}: {total_units[p]:.0f}×" for p in all_p]) +
-            "<extra></extra>",
     ))
 
-    # Pink polygon — P/L performance
+    # Red polygon — Cashout
     fig_radar.add_trace(go.Scatterpolar(
         r=pl_r,
         theta=theta,
         fill="toself",
-        fillcolor="rgba(255,150,180,0.15)",
-        line=dict(color="#ff96b4", width=2),
-        name="P/L Performance",
-        hovertemplate="<b>%{theta}</b><br>P/L performance<extra></extra>",
+        fillcolor="rgba(204,0,0,0.15)",
+        line=dict(color="#cc0000", width=2),
+        name="Cashout",
     ))
 
-    # Add per-player hover by adding invisible markers with full info
+    # Invisible markers for per-player hover tooltips
     fig_radar.add_trace(go.Scatterpolar(
         r=list(greed_scaled),
         theta=all_p,
         mode="markers",
-        marker=dict(size=8, color="#64dc64", opacity=0.8),
+        marker=dict(size=8, color="#ffffff", opacity=0.8),
         name="",
         showlegend=False,
-        hovertemplate="<b>%{theta}</b><br>" +
-            "<br>".join([
-                f"{'%{theta}'} — Buy-ins: {total_units[p]:.0f}× | P/L: ₹{total_pl_radar[p]:+.0f}"
-                for p in all_p
-            ]) + "<extra></extra>",
-        customdata=[[f"{total_units[p]:.0f}×", f"₹{total_pl_radar[p]:+.0f}"] for p in all_p],
+        customdata=[[f"{total_units[p]:.0f}×", f"₹{total_cashout[p]:,.0f}"] for p in all_p],
+        hovertemplate="<b>%{theta}</b><br>Buy-ins: %{customdata[0]}<br>Cashout: %{customdata[1]}<extra></extra>",
     ))
-
-    fig_radar.update_traces(
-        hovertemplate="<b>%{theta}</b><br>Buy-ins: %{customdata[0]}<br>P/L: %{customdata[1]}<extra></extra>",
-        selector=dict(mode="markers"),
-    )
 
     fig_radar.update_layout(
         **PLOTLY_LAYOUT,
