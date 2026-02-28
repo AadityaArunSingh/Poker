@@ -356,9 +356,8 @@ with c3:
         fillcolor="rgba(100,220,100,0.15)",
         line=dict(color="#64dc64", width=2),
         name="Buy-in Units",
-        hovertemplate="<b>%{theta}</b><br>Buy-in units: " +
-            "<br>".join([f"{p}: {total_units[p]:.0f}×" for p in all_p]) +
-            "<extra></extra>",
+        # Keep customdata for per-player hover info
+        customdata=[[f"{total_units[p]:.0f}×", f"₹{total_pl_radar[p]:+.0f}"] for p in all_p] + [[f"{total_units[all_p[0]]:.0f}×", f"₹{total_pl_radar[all_p[0]]:+.0f}"]],
     ))
 
     # Pink polygon — P/L performance
@@ -369,10 +368,12 @@ with c3:
         fillcolor="rgba(255,150,180,0.15)",
         line=dict(color="#ff96b4", width=2),
         name="P/L Performance",
-        hovertemplate="<b>%{theta}</b><br>P/L performance<extra></extra>",
+        # Keep customdata for per-player hover info
+        customdata=[[f"{total_units[p]:.0f}×", f"₹{total_pl_radar[p]:+.0f}"] for p in all_p] + [[f"{total_units[all_p[0]]:.0f}×", f"₹{total_pl_radar[all_p[0]]:+.0f}"]],
     ))
 
     # Add per-player hover by adding invisible markers with full info
+    # (Note: Original code had complex data handling here, kept mostly as is)
     fig_radar.add_trace(go.Scatterpolar(
         r=list(greed_scaled),
         theta=all_p,
@@ -380,11 +381,7 @@ with c3:
         marker=dict(size=8, color="#64dc64", opacity=0.8),
         name="",
         showlegend=False,
-        hovertemplate="<b>%{theta}</b><br>" +
-            "<br>".join([
-                f"{'%{theta}'} — Buy-ins: {total_units[p]:.0f}× | P/L: ₹{total_pl_radar[p]:+.0f}"
-                for p in all_p
-            ]) + "<extra></extra>",
+        # Re-using the logic, but ensuring customdata is consistent
         customdata=[[f"{total_units[p]:.0f}×", f"₹{total_pl_radar[p]:+.0f}"] for p in all_p],
     ))
 
@@ -393,6 +390,7 @@ with c3:
         selector=dict(mode="markers"),
     )
 
+    # Key updates for the polygonal grid style
     fig_radar.update_layout(
         **PLOTLY_LAYOUT,
         polar=dict(
@@ -407,8 +405,12 @@ with c3:
             ),
             angularaxis=dict(
                 tickfont=dict(size=12, color="#ddd"),
-                gridcolor="#1a1a1a",
                 linecolor="#333",
+                # The crucial setting: change circular grid to polygonal grid
+                gridshape="linear",
+                # Optional: make the grid lines (spokes) much darker to mimic the sketch, 
+                # or remove them completely if that's desired.
+                gridcolor="#1a1a1a", # Adjust for visibility of the linear grid
             ),
         ),
     )
