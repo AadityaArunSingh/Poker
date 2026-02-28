@@ -368,27 +368,11 @@ with c4:
         "Adelaide, AUS": {"lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺"},
     }
 
+    # Group by location + player to get P/L per person per location
     if "Location" in df_f.columns:
-        loc_df = df_f.groupby("Location").agg(
-            Total_PL=("P/L", "sum"),
-            Total_Cashout=("Cashout", "sum"),
-            Sessions=("Date", "nunique"),
-            Players=("Name", "nunique"),
-        ).reset_index()
+        player_loc_df = df_f.groupby(["Location", "Name"])["P/L"].sum().reset_index()
     else:
-        loc_df = pd.DataFrame([
-            {"Location": "London, UK",    "Total_PL": 0, "Total_Cashout": 0, "Sessions": 1, "Players": 1},
-            {"Location": "Thane, IND",    "Total_PL": 0, "Total_Cashout": 0, "Sessions": 1, "Players": 1},
-            {"Location": "Adelaide, AUS", "Total_PL": 0, "Total_Cashout": 0, "Sessions": 1, "Players": 1},
-        ])
-
-    # Scale radius by cashout: area = pi*r^2, so r = sqrt(cashout / scale_factor)
-    # We clamp to a min of 8 and max of 50 so all circles are visible
-    max_cashout = loc_df["Total_Cashout"].max() if loc_df["Total_Cashout"].max() > 0 else 1
-    def cashout_to_radius(cashout):
-        import math
-        normalised = cashout / max_cashout  # 0.0 → 1.0
-        return max(8, int(math.sqrt(normalised) * 50))  # sqrt keeps area proportional
+        player_loc_df = pd.DataFrame(columns=["Location", "Name", "P/L"])
 
     fmap = folium.Map(
         location=[20, 20],
@@ -396,34 +380,46 @@ with c4:
         tiles="CartoDB dark_matter",
     )
 
-    for _, row in loc_df.iterrows():
-        coords = LOCATION_COORDS.get(row["Location"])
-        if not coords:
-            continue
-        radius = cashout_to_radius(row["Total_Cashout"])
+    for loc_key, coords in LOCATION_COORDS.items():
+        players_here = player_loc_df[player_loc_df["Location"] == loc_key]
+
+        # Build the player list HTML rows
+        if players_here.empty:
+            player_rows = "<i style='color:#555'>No data</i>"
+        else:
+            rows = []
+            for _, p in players_here.sort_values("P/L", ascending=False).iterrows():
+                colour = "#cc0000" if p["P/L"] >= 0 else "#ff6666"
+                sign = "+" if p["P/L"] >= 0 else ""
+                rows.append(
+                    f'<tr><td style="padding:2px 8px 2px 0;color:#ddd">{p["Name"]}</td>' +
+                    f'<td style="color:{colour};font-weight:bold">{sign}₹{p["P/L"]:.0f}</td></tr>'
+                )
+            player_rows = "<table style='border-collapse:collapse'>" + "".join(rows) + "</table>"
+
         popup_html = f"""
-        <div style="font-family:monospace;background:#111;color:#f0f0f0;padding:8px;border-radius:4px;min-width:160px">
-            <b style="color:#cc0000">{coords["label"]}</b><br>
-            Total Cashout: ₹{row["Total_Cashout"]:,.0f}<br>
-            Total P/L: ₹{row["Total_PL"]:+.0f}<br>
-            Sessions: {row["Sessions"]}<br>
-            Players: {row["Players"]}
+        <div style="font-family:monospace;background:#111;color:#f0f0f0;padding:10px 12px;border-radius:6px;min-width:180px;border-top:2px solid #cc0000">
+            <b style="color:#cc0000;font-size:13px">{coords["label"]}</b><br><br>
+            {player_rows}
         </div>"""
-        folium.CircleMarker(
-            location=[coords["lat"], coords["lon"]],
-            radius=radius,
-            color="#cc0000",
-            fill=True,
-            fill_color="#cc0000",
-            fill_opacity=0.6,
-            popup=folium.Popup(popup_html, max_width=220),
-            tooltip=f'{coords["label"]} — ₹{row["Total_Cashout"]:,.0f} cashout',
-        ).add_to(fmap)
+
         folium.Marker(
             location=[coords["lat"], coords["lon"]],
+            popup=folium.Popup(popup_html, max_width=250),
+            tooltip=coords["label"],
             icon=folium.DivIcon(
-                html=f'<div style="font-family:monospace;font-size:11px;color:#ddd;white-space:nowrap;margin-top:-20px;margin-left:14px">{coords["label"]}</div>',
-                icon_size=(150, 20),
+                html=f"""<div style="
+                    font-family:monospace;
+                    font-size:11px;
+                    color:#fff;
+                    background:#cc0000;
+                    padding:3px 7px;
+                    border-radius:3px;
+                    white-space:nowrap;
+                    box-shadow:0 2px 6px rgba(0,0,0,0.6);
+                ">{coords["label"]}</div>""",
+                icon_size=(120, 24),
+                icon_anchor=(0, 12),
             )
         ).add_to(fmap)
 
