@@ -325,47 +325,83 @@ with c2:
 c3, c4 = st.columns(2)
 
 with c3:
-    # Greed Calculator — stacked bar, each block = 1x ₹200 buyin unit
+    # Radar/spider chart — greediness vs P/L per player
+    all_p = sorted(df_f["Name"].unique())
+
+    # Avg buy-in units per session (greediness score)
     greed = df_f.groupby(["Name", "Date"])["Buyin"].sum().reset_index()
-    greed["Units"] = (greed["Buyin"] / 200).round().astype(int)
-    # explode into individual unit rows so we can stack them
-    greed_expanded = greed.loc[greed.index.repeat(greed["Units"])].copy()
-    greed_expanded["Unit #"] = greed_expanded.groupby(["Name", "Date"]).cumcount() + 1
-    greed_total = greed_expanded.groupby(["Name", "Unit #"]).size().reset_index(name="Sessions")
-    max_units = int(greed["Units"].max()) if not greed.empty else 1
-    UNIT_COLOURS = [
-        "#cc0000","#a30000","#7a0000","#550000","#330000",
-        "#ff3333","#ff6666","#ff9999","#ffcccc","#ffe5e5"
+    greed["Units"] = greed["Buyin"] / 200
+    avg_units = greed.groupby("Name")["Units"].mean()
+
+    # Total P/L
+    total_pl_radar = df_f.groupby("Name")["P/L"].sum()
+
+    # Normalise both axes to 0–100 so they sit on the same radar scale
+    def normalise(series):
+        mn, mx = series.min(), series.max()
+        if mx == mn:
+            return series * 0 + 50  # all same value → put in middle
+        return (series - mn) / (mx - mn) * 100
+
+    greed_norm = normalise(avg_units.reindex(all_p, fill_value=0))
+    pl_norm    = normalise(total_pl_radar.reindex(all_p, fill_value=0))
+
+    categories = ["Greediness", "P/L Performance"]
+
+    fig_radar = go.Figure()
+    PLAYER_COLOURS = [
+        "#3498db","#2ecc71","#f39c12","#9b59b6",
+        "#1abc9c","#e67e22","#e74c3c","#f1c40f"
     ]
-    fig_greed = go.Figure()
-    for u in range(1, max_units + 1):
-        subset = greed_total[greed_total["Unit #"] == u]
-        # ensure all players present
-        all_p = sorted(df_f["Name"].unique())
-        subset = subset.set_index("Name").reindex(all_p, fill_value=0).reset_index()
-        fig_greed.add_trace(go.Bar(
-            name=f"Buy-in #{u}",
-            x=subset["Name"],
-            y=subset["Sessions"],
-            marker_color=UNIT_COLOURS[(u - 1) % len(UNIT_COLOURS)],
-            text=[f"×{u}" if v > 0 else "" for v in subset["Sessions"]],
-            textposition="inside",
-            textfont=dict(color="white", size=9),
+    for i, player in enumerate(all_p):
+        values = [greed_norm[player], pl_norm[player]]
+        values_closed = values + [values[0]]  # close the polygon
+        fig_radar.add_trace(go.Scatterpolar(
+            r=values_closed,
+            theta=categories + [categories[0]],
+            fill="toself",
+            fillcolor=PLAYER_COLOURS[i % len(PLAYER_COLOURS)].replace(")", ",0.15)").replace("rgb", "rgba").replace("#", "rgba(") if "#" in PLAYER_COLOURS[i % len(PLAYER_COLOURS)] else PLAYER_COLOURS[i % len(PLAYER_COLOURS)],
+            line=dict(color=PLAYER_COLOURS[i % len(PLAYER_COLOURS)], width=2),
+            name=player,
+            hovertemplate=(
+                f"<b>{player}</b><br>"
+                f"Greediness: {greed_norm[player]:.0f}/100<br>"
+                f"P/L Score: {pl_norm[player]:.0f}/100<br>"
+                f"Avg buy-ins/session: {avg_units.get(player, 0):.1f}×<br>"
+                f"Total P/L: ₹{total_pl_radar.get(player, 0):+.0f}"
+                "<extra></extra>"
+            ),
         ))
-    fig_greed.update_layout(**PLOTLY_LAYOUT, barmode="stack", yaxis_title="Sessions")
-    fig_greed.update_layout(legend=dict(
+
+    fig_radar.update_layout(
+        **PLOTLY_LAYOUT,
+        polar=dict(
+            bgcolor="rgba(0,0,0,0)",
+            radialaxis=dict(
+                visible=True, range=[0, 100],
+                tickfont=dict(size=8, color="#555"),
+                gridcolor="#222",
+                linecolor="#333",
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=11, color="#aaa"),
+                gridcolor="#222",
+                linecolor="#333",
+            ),
+        ),
+    )
+    fig_radar.update_layout(legend=dict(
+        orientation="h", y=-0.15, x=0.5, xanchor="center",
+        font=dict(color="#aaa", size=10),
         bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#666", size=9),
-        orientation="h",
-        y=-0.2,
     ))
-    chart_card("♦ Greed Calculator", fig_greed, "greed")
+    chart_card("♦ Greed vs Reward", fig_radar, "radar")
 
 with c4:
     # World bubble map — Folium
     LOCATION_COORDS = {
         "London, UK":    {"lat": 51.5074,  "lon": -0.1278,  "label": "London 🇬🇧"},
-        "Thane, IND":    {"lat": 19.2183,  "lon": 72.9781,  "label": "Thane 🇮🇳"},
+        "Thane, IND":    {"lat": 19.2183,  "lon": 72.9781,  "label": "Mumbai 🇮🇳"},
         "Adelaide, AUS": {"lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺"},
     }
 
