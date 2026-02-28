@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import folium
+from streamlit_folium import st_folium
 
 st.set_page_config(
     page_title="🃏 जुआरी Dashboard",
@@ -359,65 +361,65 @@ with c3:
     chart_card("♦ Greed Calculator", fig_greed, "greed")
 
 with c4:
-    # World bubble map — player locations
+    # World bubble map — Folium
     LOCATION_COORDS = {
         "London, UK":    {"lat": 51.5074,  "lon": -0.1278,  "label": "London 🇬🇧"},
         "Thane, IND":    {"lat": 19.2183,  "lon": 72.9781,  "label": "Thane 🇮🇳"},
         "Adelaide, AUS": {"lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺"},
     }
-    # aggregate P/L and sessions per location
+
     if "Location" in df_f.columns:
         loc_df = df_f.groupby("Location").agg(
             Total_PL=("P/L", "sum"),
             Sessions=("Date", "nunique"),
             Players=("Name", "nunique"),
         ).reset_index()
-        loc_df["lat"]   = loc_df["Location"].map(lambda x: LOCATION_COORDS.get(x, {}).get("lat"))
-        loc_df["lon"]   = loc_df["Location"].map(lambda x: LOCATION_COORDS.get(x, {}).get("lon"))
-        loc_df["label"] = loc_df["Location"].map(lambda x: LOCATION_COORDS.get(x, {}).get("label", x))
-        loc_df["size"]  = loc_df["Sessions"].clip(lower=1) * 8
-        loc_df = loc_df.dropna(subset=["lat", "lon"])
     else:
-        # fallback: dummy data so layout still renders
         loc_df = pd.DataFrame([
-            {"Location": "London, UK",    "Total_PL": 0, "Sessions": 1, "Players": 1, "lat": 51.5074,  "lon": -0.1278,  "label": "London 🇬🇧",   "size": 8},
-            {"Location": "Thane, IND",    "Total_PL": 0, "Sessions": 1, "Players": 1, "lat": 19.2183,  "lon": 72.9781,  "label": "Thane 🇮🇳",    "size": 8},
-            {"Location": "Adelaide, AUS", "Total_PL": 0, "Sessions": 1, "Players": 1, "lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺", "size": 8},
+            {"Location": "London, UK",    "Total_PL": 0, "Sessions": 1, "Players": 1},
+            {"Location": "Thane, IND",    "Total_PL": 0, "Sessions": 1, "Players": 1},
+            {"Location": "Adelaide, AUS", "Total_PL": 0, "Sessions": 1, "Players": 1},
         ])
 
-    fig_map = px.scatter_geo(
-        loc_df,
-        lat="lat", lon="lon",
-        size="size",
-        text="label",
-        hover_name="label",
-        hover_data={"Total_PL": True, "Sessions": True, "Players": True, "lat": False, "lon": False, "size": False},
-        size_max=40,
-        projection="natural earth",
+    fmap = folium.Map(
+        location=[20, 20],
+        zoom_start=2,
+        tiles="CartoDB dark_matter",
     )
-    fig_map.update_traces(
-        marker=dict(color="#cc0000", opacity=0.85, line=dict(color="#ff4444", width=1)),
-        textfont=dict(color="#ddd", size=10),
-        textposition="top center",
-    )
-    fig_map.update_geos(
-        bgcolor="rgba(0,0,0,0)",
-        landcolor="#1a1a1a",
-        oceancolor="#0a0a0a",
-        showocean=True,
-        lakecolor="#0a0a0a",
-        showcountries=True,
-        countrycolor="#2a2a2a",
-        showcoastlines=True,
-        coastlinecolor="#2a2a2a",
-        showframe=False,
-    )
-    fig_map.update_layout(
-        **PLOTLY_LAYOUT,
-        geo=dict(bgcolor="rgba(0,0,0,0)"),
-        margin=dict(l=0, r=0, t=0, b=0),
-    )
-    chart_card("♣ Where the Gamblers Are", fig_map, "map")
+
+    for _, row in loc_df.iterrows():
+        coords = LOCATION_COORDS.get(row["Location"])
+        if not coords:
+            continue
+        radius = max(10, int(row["Sessions"]) * 6)
+        popup_html = f"""
+        <div style="font-family:monospace;background:#111;color:#f0f0f0;padding:8px;border-radius:4px;min-width:140px">
+            <b style="color:#cc0000">{coords["label"]}</b><br>
+            Sessions: {row["Sessions"]}<br>
+            Players: {row["Players"]}<br>
+            Total P/L: ₹{row["Total_PL"]:+.0f}
+        </div>"""
+        folium.CircleMarker(
+            location=[coords["lat"], coords["lon"]],
+            radius=radius,
+            color="#cc0000",
+            fill=True,
+            fill_color="#cc0000",
+            fill_opacity=0.6,
+            popup=folium.Popup(popup_html, max_width=200),
+            tooltip=coords["label"],
+        ).add_to(fmap)
+        folium.Marker(
+            location=[coords["lat"], coords["lon"]],
+            icon=folium.DivIcon(
+                html=f'<div style="font-family:monospace;font-size:11px;color:#ddd;white-space:nowrap;margin-top:-20px;margin-left:14px">{coords["label"]}</div>',
+                icon_size=(150, 20),
+            )
+        ).add_to(fmap)
+
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♣ Where the Gamblers Are</div>', unsafe_allow_html=True)
+    st_folium(fmap, use_container_width=True, height=320, returned_objects=[])
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
