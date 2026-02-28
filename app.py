@@ -371,15 +371,24 @@ with c4:
     if "Location" in df_f.columns:
         loc_df = df_f.groupby("Location").agg(
             Total_PL=("P/L", "sum"),
+            Total_Cashout=("Cashout", "sum"),
             Sessions=("Date", "nunique"),
             Players=("Name", "nunique"),
         ).reset_index()
     else:
         loc_df = pd.DataFrame([
-            {"Location": "London, UK",    "Total_PL": 0, "Sessions": 1, "Players": 1},
-            {"Location": "Thane, IND",    "Total_PL": 0, "Sessions": 1, "Players": 1},
-            {"Location": "Adelaide, AUS", "Total_PL": 0, "Sessions": 1, "Players": 1},
+            {"Location": "London, UK",    "Total_PL": 0, "Total_Cashout": 0, "Sessions": 1, "Players": 1},
+            {"Location": "Thane, IND",    "Total_PL": 0, "Total_Cashout": 0, "Sessions": 1, "Players": 1},
+            {"Location": "Adelaide, AUS", "Total_PL": 0, "Total_Cashout": 0, "Sessions": 1, "Players": 1},
         ])
+
+    # Scale radius by cashout: area = pi*r^2, so r = sqrt(cashout / scale_factor)
+    # We clamp to a min of 8 and max of 50 so all circles are visible
+    max_cashout = loc_df["Total_Cashout"].max() if loc_df["Total_Cashout"].max() > 0 else 1
+    def cashout_to_radius(cashout):
+        import math
+        normalised = cashout / max_cashout  # 0.0 → 1.0
+        return max(8, int(math.sqrt(normalised) * 50))  # sqrt keeps area proportional
 
     fmap = folium.Map(
         location=[20, 20],
@@ -391,13 +400,14 @@ with c4:
         coords = LOCATION_COORDS.get(row["Location"])
         if not coords:
             continue
-        radius = max(10, int(row["Sessions"]) * 6)
+        radius = cashout_to_radius(row["Total_Cashout"])
         popup_html = f"""
-        <div style="font-family:monospace;background:#111;color:#f0f0f0;padding:8px;border-radius:4px;min-width:140px">
+        <div style="font-family:monospace;background:#111;color:#f0f0f0;padding:8px;border-radius:4px;min-width:160px">
             <b style="color:#cc0000">{coords["label"]}</b><br>
+            Total Cashout: ₹{row["Total_Cashout"]:,.0f}<br>
+            Total P/L: ₹{row["Total_PL"]:+.0f}<br>
             Sessions: {row["Sessions"]}<br>
-            Players: {row["Players"]}<br>
-            Total P/L: ₹{row["Total_PL"]:+.0f}
+            Players: {row["Players"]}
         </div>"""
         folium.CircleMarker(
             location=[coords["lat"], coords["lon"]],
@@ -406,8 +416,8 @@ with c4:
             fill=True,
             fill_color="#cc0000",
             fill_opacity=0.6,
-            popup=folium.Popup(popup_html, max_width=200),
-            tooltip=coords["label"],
+            popup=folium.Popup(popup_html, max_width=220),
+            tooltip=f'{coords["label"]} — ₹{row["Total_Cashout"]:,.0f} cashout',
         ).add_to(fmap)
         folium.Marker(
             location=[coords["lat"], coords["lon"]],
