@@ -322,47 +322,106 @@ with c2:
 c3, c4 = st.columns(2)
 
 with c3:
-    win_rate = (
-        df_f.groupby("Name")["P/L"]
-        .apply(lambda x: round((x > 0).sum() / len(x) * 100, 1))
-        .reset_index()
-    )
-    win_rate.columns = ["Player", "Win Rate (%)"]
-    win_rate = win_rate.sort_values("Win Rate (%)", ascending=False)
-    fig_wr = go.Figure(go.Bar(
-        x=win_rate["Player"],
-        y=win_rate["Win Rate (%)"],
-        marker=dict(
-            color=win_rate["Win Rate (%)"],
-            colorscale=[[0, "#2a0000"], [0.5, "#8b0000"], [1, "#cc0000"]],
-            showscale=False,
+    # Greed Calculator — stacked bar, each block = 1x ₹200 buyin unit
+    greed = df_f.groupby(["Name", "Date"])["Buyin"].sum().reset_index()
+    greed["Units"] = (greed["Buyin"] / 200).round().astype(int)
+    # explode into individual unit rows so we can stack them
+    greed_expanded = greed.loc[greed.index.repeat(greed["Units"])].copy()
+    greed_expanded["Unit #"] = greed_expanded.groupby(["Name", "Date"]).cumcount() + 1
+    greed_total = greed_expanded.groupby(["Name", "Unit #"]).size().reset_index(name="Sessions")
+    max_units = int(greed["Units"].max()) if not greed.empty else 1
+    UNIT_COLOURS = [
+        "#cc0000","#a30000","#7a0000","#550000","#330000",
+        "#ff3333","#ff6666","#ff9999","#ffcccc","#ffe5e5"
+    ]
+    fig_greed = go.Figure()
+    for u in range(1, max_units + 1):
+        subset = greed_total[greed_total["Unit #"] == u]
+        # ensure all players present
+        all_p = sorted(df_f["Name"].unique())
+        subset = subset.set_index("Name").reindex(all_p, fill_value=0).reset_index()
+        fig_greed.add_trace(go.Bar(
+            name=f"Buy-in #{u}",
+            x=subset["Name"],
+            y=subset["Sessions"],
+            marker_color=UNIT_COLOURS[(u - 1) % len(UNIT_COLOURS)],
+            text=[f"×{u}" if v > 0 else "" for v in subset["Sessions"]],
+            textposition="inside",
+            textfont=dict(color="white", size=9),
+        ))
+    fig_greed.update_layout(
+        **PLOTLY_LAYOUT,
+        barmode="stack",
+        yaxis_title="Sessions",
+        legend=dict(
+            bgcolor="rgba(0,0,0,0)",
+            font=dict(color="#666", size=9),
+            orientation="h",
+            y=-0.2,
         ),
-        text=win_rate["Win Rate (%)"].apply(lambda x: f"{x}%"),
-        textposition="outside",
-        textfont=dict(color="#aaa", size=10),
-    ))
-    fig_wr.update_layout(**PLOTLY_LAYOUT, yaxis_title="Win Rate (%)")
-    chart_card("♦ Win Rate by Player", fig_wr, "winrate")
+    )
+    chart_card("♦ Greed Calculator", fig_greed, "greed")
 
 with c4:
-    pivot = df_f.pivot_table(
-        index="Name",
-        columns=df_f["Date"].dt.strftime("%d %b"),
-        values="P/L",
-        aggfunc="sum"
+    # World bubble map — player locations
+    LOCATION_COORDS = {
+        "London, UK":    {"lat": 51.5074,  "lon": -0.1278,  "label": "London 🇬🇧"},
+        "Thane, IND":    {"lat": 19.2183,  "lon": 72.9781,  "label": "Thane 🇮🇳"},
+        "Adelaide, AUS": {"lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺"},
+    }
+    # aggregate P/L and sessions per location
+    if "Location" in df_f.columns:
+        loc_df = df_f.groupby("Location").agg(
+            Total_PL=("P/L", "sum"),
+            Sessions=("Date", "nunique"),
+            Players=("Name", "nunique"),
+        ).reset_index()
+        loc_df["lat"]   = loc_df["Location"].map(lambda x: LOCATION_COORDS.get(x, {}).get("lat"))
+        loc_df["lon"]   = loc_df["Location"].map(lambda x: LOCATION_COORDS.get(x, {}).get("lon"))
+        loc_df["label"] = loc_df["Location"].map(lambda x: LOCATION_COORDS.get(x, {}).get("label", x))
+        loc_df["size"]  = loc_df["Sessions"].clip(lower=1) * 8
+        loc_df = loc_df.dropna(subset=["lat", "lon"])
+    else:
+        # fallback: dummy data so layout still renders
+        loc_df = pd.DataFrame([
+            {"Location": "London, UK",    "Total_PL": 0, "Sessions": 1, "Players": 1, "lat": 51.5074,  "lon": -0.1278,  "label": "London 🇬🇧",   "size": 8},
+            {"Location": "Thane, IND",    "Total_PL": 0, "Sessions": 1, "Players": 1, "lat": 19.2183,  "lon": 72.9781,  "label": "Thane 🇮🇳",    "size": 8},
+            {"Location": "Adelaide, AUS", "Total_PL": 0, "Sessions": 1, "Players": 1, "lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺", "size": 8},
+        ])
+
+    fig_map = px.scatter_geo(
+        loc_df,
+        lat="lat", lon="lon",
+        size="size",
+        text="label",
+        hover_name="label",
+        hover_data={"Total_PL": True, "Sessions": True, "Players": True, "lat": False, "lon": False, "size": False},
+        size_max=40,
+        projection="natural earth",
     )
-    fig_heat = go.Figure(go.Heatmap(
-        z=pivot.values,
-        x=pivot.columns.tolist(),
-        y=pivot.index.tolist(),
-        colorscale=[[0, "#4a0000"], [0.5, "#1a1a1a"], [1, "#cc0000"]],
-        text=pivot.values,
-        texttemplate="₹%{text:.0f}",
-        textfont=dict(size=10, color="#ddd"),
-        zmid=0,
-    ))
-    fig_heat.update_layout(**PLOTLY_LAYOUT)
-    chart_card("♣ Session Heatmap", fig_heat, "heat")
+    fig_map.update_traces(
+        marker=dict(color="#cc0000", opacity=0.85, line=dict(color="#ff4444", width=1)),
+        textfont=dict(color="#ddd", size=10),
+        textposition="top center",
+    )
+    fig_map.update_geos(
+        bgcolor="rgba(0,0,0,0)",
+        landcolor="#1a1a1a",
+        oceancolor="#0a0a0a",
+        showocean=True,
+        lakecolor="#0a0a0a",
+        showcountries=True,
+        countrycolor="#2a2a2a",
+        showcoastlines=True,
+        coastlinecolor="#2a2a2a",
+        showframe=False,
+    )
+    fig_map.update_layout(
+        **PLOTLY_LAYOUT,
+        geo=dict(bgcolor="rgba(0,0,0,0)"),
+        margin=dict(l=0, r=0, t=0, b=0),
+    )
+    chart_card("♣ Where the Gamblers Are", fig_map, "map")
 
 # sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
