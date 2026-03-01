@@ -315,7 +315,7 @@ with c2:
     )
     fig_line = px.line(
     df_cum, x="Date", y="P/L", color="Name", markers=True,
-    color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#ffffff","#e67e22","#e74c3c","#f1c40f"]
+    color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#ff00ea","#e67e22","#e74c3c","#f1c40f"]
     )
     fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
     fig_line.update_layout(legend=dict(orientation="h", y=-0.25, x=0, xanchor="left"))
