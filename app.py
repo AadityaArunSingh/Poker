@@ -290,11 +290,22 @@ biggest_winner = total_pl.idxmax() if not total_pl.empty else "N/A"
 biggest_loser  = total_pl.idxmin() if not total_pl.empty else "N/A"
 most_active    = sessions_per_player.idxmax() if not sessions_per_player.empty else "N/A"
 
+# Players who attended every session
+total_sessions = df_f["Date"].nunique()
+full_attendance = [
+    p for p in sessions_per_player.index
+    if sessions_per_player[p] == total_sessions
+]
+regulars_str = ", ".join(full_attendance) if full_attendance else "None"
+# Truncate if too long
+if len(regulars_str) > 28:
+    regulars_str = regulars_str[:25] + "…"
+
 k1, k2, k3, k4 = st.columns(4)
-k1.metric("♠ All time GOAT", biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
-k2.metric("♥ Biggest Spender",   biggest_loser,  f"₹{total_pl.get(biggest_loser, 0):+.0f}")
-k3.metric("♦ Session Count", sessions_count)
-k4.metric("♣ Table Regular",    most_active,    f"{sessions_per_player.get(most_active, 0)} sessions")
+k1.metric("♠ All Time GOAT",    biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
+k2.metric("♥ Biggest Spender",  biggest_loser,  float(total_pl.get(biggest_loser, 0)),  delta_color="inverse")
+k3.metric("♦ Session Count",    sessions_count)
+k4.metric("♣ Table Regulars",   regulars_str)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
