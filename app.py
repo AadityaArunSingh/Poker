@@ -260,6 +260,21 @@ if len(date_range) == 2:
 else:
     df_f = df[df["Name"].isin(selected_players)]
 
+if len(date_range) == 2:
+    start, end = date_range
+    df_f = df[
+        (df["Name"].isin(selected_players)) &
+        (df["Date"].dt.date >= start) &
+        (df["Date"].dt.date <= end)
+    ]
+else:
+    df_f = df[df["Name"].isin(selected_players)]
+
+# Only show players with more than 5 sessions in charts
+qualified = df_f.groupby("Name")["Date"].nunique()
+qualified_players = qualified[qualified > 5].index
+df_f = df_f[df_f["Name"].isin(qualified_players)]
+
 # Hero Header
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">JUAARI DASHBOARD</div>', unsafe_allow_html=True)
@@ -278,8 +293,8 @@ most_active    = sessions_per_player.idxmax() if not sessions_per_player.empty e
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("♠ All time GOAT", biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
 k2.metric("♥ Biggest Spender",   biggest_loser,  f"₹{total_pl.get(biggest_loser, 0):+.0f}")
-k3.metric("♦ Unbroken Streak", sessions_count)
-k4.metric("♣ Most Unemployed",    most_active,    f"{sessions_per_player.get(most_active, 0)} sessions")
+k3.metric("♦ Session Count", sessions_count)
+k4.metric("♣ Table Regular",    most_active,    f"{sessions_per_player.get(most_active, 0)} sessions")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
