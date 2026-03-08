@@ -72,14 +72,7 @@ html, body, [class*="css"] {
     padding-bottom: 0.5rem;
     opacity: 0.7;
 }
-            
-/* Force biggest spender delta to always be red with down arrow */
-[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] {
-    color: #cc0000 !important;
-}
-[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] svg {
-    transform: rotate(180deg);
-}
+        
 
 /* ── Divider ── */
 .red-divider {
@@ -113,6 +106,14 @@ html, body, [class*="css"] {
 [data-testid="stMetricDelta"] {
     font-family: 'DM Mono', monospace !important;
     font-size: 0.85rem !important;
+}
+            
+/* Force biggest spender delta to always be red with down arrow */
+[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] {
+    color: #cc0000 !important;
+}
+[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] svg {
+    transform: rotate(180deg);
 }
 
 /* ── Chart cards ── */
