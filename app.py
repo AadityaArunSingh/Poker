@@ -108,12 +108,12 @@ html, body, [class*="css"] {
     font-size: 0.85rem !important;
 }
             
-/* Force biggest spender delta to always be red with down arrow */
-[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] {
-    color: #cc0000 !important;
+/* Biggest Spender delta — force red */
+[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] svg path {
+    fill: #cc0000 !important;
 }
-[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] svg {
-    transform: rotate(180deg);
+[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] > div {
+    color: #cc0000 !important;
 }
 
 /* ── Chart cards ── */
