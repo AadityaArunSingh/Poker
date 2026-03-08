@@ -312,7 +312,21 @@ if len(regulars_str) > 28:
 
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("♠ All Time GOAT",    biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
-k2.metric("♥ Biggest Spender",  biggest_loser,  float(total_pl.get(biggest_loser, 0)),  delta_color="inverse")
+loser_val = total_pl.get(biggest_loser, 0)
+k2.markdown(f"""
+<div data-testid="stMetric" style="
+    background: linear-gradient(135deg, #141414 0%, #1a0a0a 100%);
+    border: 1px solid #2a0a0a;
+    border-top: 2px solid #cc0000;
+    border-radius: 6px;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+">
+    <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#888">♥ Biggest Spender</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#ffffff;margin:0.2rem 0">{biggest_loser}</div>
+    <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:#cc0000">▼ ₹{abs(loser_val):,.0f}</div>
+</div>
+""", unsafe_allow_html=True)
 k3.metric("♦ Session Count",    sessions_count)
 k4.metric("♣ Table Regulars",   regulars_str)
 
