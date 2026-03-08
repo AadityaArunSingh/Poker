@@ -310,11 +310,12 @@ regulars_str = ", ".join(full_attendance) if full_attendance else "None"
 if len(regulars_str) > 28:
     regulars_str = regulars_str[:25] + "…"
 
-k1, k2, k3, k4 = st.columns(4)
-k1.metric("♠ All Time GOAT",    biggest_winner, f"₹{total_pl.get(biggest_winner, 0):+.0f}")
-loser_val = total_pl.get(biggest_loser, 0)
-k2.markdown(f"""
-<div data-testid="stMetric" style="
+winner_val = total_pl.get(biggest_winner, 0)
+loser_val  = total_pl.get(biggest_loser, 0)
+
+def kpi_card(col, label, value, delta=None, delta_colour="#cc0000", delta_arrow="▼"):
+    col.markdown(f"""
+<div style="
     background: linear-gradient(135deg, #141414 0%, #1a0a0a 100%);
     border: 1px solid #2a0a0a;
     border-top: 2px solid #cc0000;
@@ -322,13 +323,17 @@ k2.markdown(f"""
     padding: 1rem 1.2rem;
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 ">
-    <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#888">♥ Biggest Spender</div>
-    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#ffffff;margin:0.2rem 0">{biggest_loser}</div>
-    <div style="font-family:'DM Mono',monospace;font-size:0.85rem;color:#cc0000">▼ ₹{abs(loser_val):,.0f}</div>
+    <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#888">{label}</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#ffffff;margin:0.2rem 0">{value}</div>
+    {f'<div style="font-family:DM Mono,monospace;font-size:0.85rem;color:{delta_colour}">{delta_arrow} {delta}</div>' if delta else ''}
 </div>
 """, unsafe_allow_html=True)
-k3.metric("♦ Session Count",    sessions_count)
-k4.metric("♣ Table Regulars",   regulars_str)
+
+k1, k2, k3, k4 = st.columns(4)
+kpi_card(k1, "♠ All Time GOAT",   biggest_winner, f"₹{abs(winner_val):,.0f}", delta_colour="#2ecc71", delta_arrow="▲")
+kpi_card(k2, "♥ Biggest Spender", biggest_loser,  f"₹{abs(loser_val):,.0f}",  delta_colour="#cc0000", delta_arrow="▼")
+kpi_card(k3, "♦ Session Count",   sessions_count)
+kpi_card(k4, "♣ Table Regulars",  regulars_str)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
