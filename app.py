@@ -339,10 +339,118 @@ with c2:
 # charts on row 2
 c3, c4 = st.columns(2)
 
+# with c3:
+#     all_p = sorted(df_f["Name"].unique())
+
+#     # Average buy-in units per player across all sessions
+#     greed = df_f.groupby(["Name", "Date"])["Buyin"].sum().reset_index()
+#     greed["Units"] = greed["Buyin"] / 200
+#     avg_units = greed.groupby("Name")["Units"].mean().reindex(all_p, fill_value=0)
+
+#     # Total cashout per player
+#     total_cashout = df_f.groupby("Name")["Cashout"].sum().reindex(all_p, fill_value=0)
+
+#     # Normalise cashout to 0–100
+#     max_cashout = total_cashout.max() or 1
+#     cashout_scaled = (total_cashout / max_cashout * 100).round(1)
+
+#     # Each ring represents one buy-in level (1×, 2×, 3×, 4×)
+#     # A player contributes to ring N only if their avg >= N
+#     MAX_RINGS = 4
+#     theta = all_p + [all_p[0]]
+
+#     fig_radar = go.Figure()
+
+#     # Draw rings from outermost (4) to innermost (1) so inner rings render on top
+#     ring_styles = {
+#         4: dict(color="rgba(255,255,255,0.9)", fill="rgba(255,255,255,0.03)", width=2),
+#         3: dict(color="rgba(255,255,255,0.7)", fill="rgba(255,255,255,0.05)", width=2),
+#         2: dict(color="rgba(255,255,255,0.5)", fill="rgba(255,255,255,0.07)", width=2),
+#         1: dict(color="rgba(255,255,255,0.3)", fill="rgba(255,255,255,0.10)", width=2),
+#     }
+
+#     for ring in range(MAX_RINGS, 0, -1):
+#         # Player reaches this ring only if avg buy-ins >= ring level
+#         r_vals = [
+#             (ring / MAX_RINGS * 100) if avg_units[p] >= ring else 0
+#             for p in all_p
+#         ]
+#         r_closed = r_vals + [r_vals[0]]
+#         style = ring_styles[ring]
+#         fig_radar.add_trace(go.Scatterpolar(
+#             r=r_closed,
+#             theta=theta,
+#             fill="toself",
+#             fillcolor=style["fill"],
+#             line=dict(color=style["color"], width=style["width"]),
+#             name=f"Avg {ring}× Buy-in",
+#             hovertemplate=(
+#                 "<b>%{theta}</b><br>"
+#                 f"Reached {ring}× avg buy-in<extra></extra>"
+#             ),
+#         ))
+
+#     # Red polygon — Cashout on top
+#     cashout_r = list(cashout_scaled) + [cashout_scaled.iloc[0]]
+#     fig_radar.add_trace(go.Scatterpolar(
+#         r=cashout_r,
+#         theta=theta,
+#         fill="toself",
+#         fillcolor="rgba(204,0,0,0.15)",
+#         line=dict(color="#cc0000", width=2),
+#         name="Cashout",
+#     ))
+
+#     # Invisible markers for clean per-player hover
+#     fig_radar.add_trace(go.Scatterpolar(
+#         r=list(cashout_scaled),
+#         theta=all_p,
+#         mode="markers",
+#         marker=dict(size=8, color="#cc0000", opacity=0.8),
+#         showlegend=False,
+#         customdata=[
+#             [f"{avg_units[p]:.1f}×", f"₹{total_cashout[p]:,.0f}"]
+#             for p in all_p
+#         ],
+#         hovertemplate=(
+#             "<b>%{theta}</b><br>"
+#             "Avg buy-ins: %{customdata[0]}<br>"
+#             "Total cashout: %{customdata[1]}"
+#             "<extra></extra>"
+#         ),
+#     ))
+
+#     fig_radar.update_layout(
+#         **PLOTLY_LAYOUT,
+#         polar=dict(
+#             bgcolor="rgba(0,0,0,0)",
+#             radialaxis=dict(
+#                 visible=True,
+#                 range=[0, 100],
+#                 showticklabels=False,
+#                 gridcolor="#222",
+#                 linecolor="#333",
+#             ),
+#             angularaxis=dict(
+#                 tickfont=dict(size=12, color="#ddd"),
+#                 gridcolor="#1a1a1a",
+#                 linecolor="#333",
+#             ),
+#         ),
+#     )
+#     fig_radar.update_layout(legend=dict(
+#         orientation="h", y=-0.15, x=0.5, xanchor="center",
+#         font=dict(color="#aaa", size=10),
+#         bgcolor="rgba(0,0,0,0)",
+#     ))
+#     chart_card("♦ Greed vs Reward", fig_radar, "radar")
+
 with c3:
+    import streamlit.components.v1 as components
+
     all_p = sorted(df_f["Name"].unique())
 
-    # Average buy-in units per player across all sessions
+    # Average buy-in units per player
     greed = df_f.groupby(["Name", "Date"])["Buyin"].sum().reset_index()
     greed["Units"] = greed["Buyin"] / 200
     avg_units = greed.groupby("Name")["Units"].mean().reindex(all_p, fill_value=0)
@@ -354,96 +462,197 @@ with c3:
     max_cashout = total_cashout.max() or 1
     cashout_scaled = (total_cashout / max_cashout * 100).round(1)
 
-    # Each ring represents one buy-in level (1×, 2×, 3×, 4×)
-    # A player contributes to ring N only if their avg >= N
+    # Build ring data — 4 rings, player reaches ring N if avg >= N
     MAX_RINGS = 4
-    theta = all_p + [all_p[0]]
-
-    fig_radar = go.Figure()
-
-    # Draw rings from outermost (4) to innermost (1) so inner rings render on top
-    ring_styles = {
-        4: dict(color="rgba(255,255,255,0.9)", fill="rgba(255,255,255,0.03)", width=2),
-        3: dict(color="rgba(255,255,255,0.7)", fill="rgba(255,255,255,0.05)", width=2),
-        2: dict(color="rgba(255,255,255,0.5)", fill="rgba(255,255,255,0.07)", width=2),
-        1: dict(color="rgba(255,255,255,0.3)", fill="rgba(255,255,255,0.10)", width=2),
-    }
-
-    for ring in range(MAX_RINGS, 0, -1):
-        # Player reaches this ring only if avg buy-ins >= ring level
-        r_vals = [
-            (ring / MAX_RINGS * 100) if avg_units[p] >= ring else 0
+    ring_data = []
+    for ring in range(1, MAX_RINGS + 1):
+        ring_data.append([
+            round((ring / MAX_RINGS * 100), 1) if avg_units[p] >= ring else 0
             for p in all_p
-        ]
-        r_closed = r_vals + [r_vals[0]]
-        style = ring_styles[ring]
-        fig_radar.add_trace(go.Scatterpolar(
-            r=r_closed,
-            theta=theta,
-            fill="toself",
-            fillcolor=style["fill"],
-            line=dict(color=style["color"], width=style["width"]),
-            name=f"Avg {ring}× Buy-in",
-            hovertemplate=(
-                "<b>%{theta}</b><br>"
-                f"Reached {ring}× avg buy-in<extra></extra>"
-            ),
-        ))
+        ])
 
-    # Red polygon — Cashout on top
-    cashout_r = list(cashout_scaled) + [cashout_scaled.iloc[0]]
-    fig_radar.add_trace(go.Scatterpolar(
-        r=cashout_r,
-        theta=theta,
-        fill="toself",
-        fillcolor="rgba(204,0,0,0.15)",
-        line=dict(color="#cc0000", width=2),
-        name="Cashout",
-    ))
+    # Pass data to JS
+    labels        = all_p
+    cashout_vals  = [float(cashout_scaled[p]) for p in all_p]
+    ring1, ring2, ring3, ring4 = ring_data
 
-    # Invisible markers for clean per-player hover
-    fig_radar.add_trace(go.Scatterpolar(
-        r=list(cashout_scaled),
-        theta=all_p,
-        mode="markers",
-        marker=dict(size=8, color="#cc0000", opacity=0.8),
-        showlegend=False,
-        customdata=[
-            [f"{avg_units[p]:.1f}×", f"₹{total_cashout[p]:,.0f}"]
-            for p in all_p
-        ],
-        hovertemplate=(
-            "<b>%{theta}</b><br>"
-            "Avg buy-ins: %{customdata[0]}<br>"
-            "Total cashout: %{customdata[1]}"
-            "<extra></extra>"
-        ),
-    ))
+    # Hover info as parallel arrays
+    avg_units_list    = [round(float(avg_units[p]), 1) for p in all_p]
+    cashout_raw_list  = [int(total_cashout[p]) for p in all_p]
 
-    fig_radar.update_layout(
-        **PLOTLY_LAYOUT,
-        polar=dict(
-            bgcolor="rgba(0,0,0,0)",
-            radialaxis=dict(
-                visible=True,
-                range=[0, 100],
-                showticklabels=False,
-                gridcolor="#222",
-                linecolor="#333",
-            ),
-            angularaxis=dict(
-                tickfont=dict(size=12, color="#ddd"),
-                gridcolor="#1a1a1a",
-                linecolor="#333",
-            ),
-        ),
-    )
-    fig_radar.update_layout(legend=dict(
-        orientation="h", y=-0.15, x=0.5, xanchor="center",
-        font=dict(color="#aaa", size=10),
-        bgcolor="rgba(0,0,0,0)",
-    ))
-    chart_card("♦ Greed vs Reward", fig_radar, "radar")
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♦ Greed vs Reward</div>', unsafe_allow_html=True)
+    components.html(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  body {{
+    background: transparent;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }}
+  canvas {{ max-width: 100%; }}
+  #tooltip {{
+    position: absolute;
+    background: #111;
+    border-top: 2px solid #cc0000;
+    color: #f0f0f0;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    pointer-events: none;
+    display: none;
+    white-space: nowrap;
+    z-index: 99;
+  }}
+</style>
+</head>
+<body>
+<div style="position:relative;width:420px;height:420px;">
+  <canvas id="radar"></canvas>
+  <div id="tooltip"></div>
+</div>
+<script>
+  const labels       = {labels};
+  const cashout      = {cashout_vals};
+  const ring1        = {ring1};
+  const ring2        = {ring2};
+  const ring3        = {ring3};
+  const ring4        = {ring4};
+  const avgUnits     = {avg_units_list};
+  const cashoutRaw   = {cashout_raw_list};
+
+  let rotation = 0;
+
+  const data = {{
+    labels: labels,
+    datasets: [
+      {{
+        label: "Avg 4× Buy-in",
+        data: ring4,
+        borderColor: "rgba(255,255,255,0.9)",
+        backgroundColor: "rgba(255,255,255,0.03)",
+        borderWidth: 2,
+        pointRadius: 0,
+        order: 4,
+      }},
+      {{
+        label: "Avg 3× Buy-in",
+        data: ring3,
+        borderColor: "rgba(255,255,255,0.65)",
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderWidth: 2,
+        pointRadius: 0,
+        order: 3,
+      }},
+      {{
+        label: "Avg 2× Buy-in",
+        data: ring2,
+        borderColor: "rgba(255,255,255,0.4)",
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderWidth: 2,
+        pointRadius: 0,
+        order: 2,
+      }},
+      {{
+        label: "Avg 1× Buy-in",
+        data: ring1,
+        borderColor: "rgba(255,255,255,0.2)",
+        backgroundColor: "rgba(255,255,255,0.08)",
+        borderWidth: 2,
+        pointRadius: 0,
+        order: 1,
+      }},
+      {{
+        label: "Cashout",
+        data: cashout,
+        borderColor: "#cc0000",
+        backgroundColor: "rgba(204,0,0,0.15)",
+        borderWidth: 2.5,
+        pointBackgroundColor: "#cc0000",
+        pointRadius: 4,
+        order: 0,
+      }},
+    ]
+  }};
+
+  const config = {{
+    type: "radar",
+    data: data,
+    options: {{
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {{
+        legend: {{
+          position: "bottom",
+          labels: {{
+            color: "#666",
+            font: {{ family: "monospace", size: 10 }},
+            boxWidth: 12,
+            filter: (item) => item.text !== "",
+          }}
+        }},
+        tooltip: {{ enabled: false }},
+      }},
+      scales: {{
+        r: {{
+          startAngle: 0,
+          min: 0,
+          max: 100,
+          ticks: {{ display: false, stepSize: 25 }},
+          grid: {{ color: "#222" }},
+          angleLines: {{ color: "#333" }},
+          pointLabels: {{
+            color: "#ddd",
+            font: {{ family: "monospace", size: 12 }},
+          }},
+        }}
+      }}
+    }}
+  }};
+
+  const ctx = document.getElementById("radar").getContext("2d");
+  const chart = new Chart(ctx, config);
+
+  // Smooth rotation
+  function rotate() {{
+    rotation = (rotation + 0.15) % 360;
+    chart.options.scales.r.startAngle = rotation;
+    chart.update("none");
+    requestAnimationFrame(rotate);
+  }}
+  rotate();
+
+  // Custom tooltip on hover
+  const canvas = document.getElementById("radar");
+  const tooltip = document.getElementById("tooltip");
+
+  canvas.addEventListener("mousemove", (e) => {{
+    const points = chart.getElementsAtEventForMode(e, "point", {{ intersect: true }}, false);
+    if (points.length > 0) {{
+      const idx = points[0].index;
+      tooltip.style.display = "block";
+      tooltip.style.left = (e.offsetX + 14) + "px";
+      tooltip.style.top  = (e.offsetY - 10) + "px";
+      tooltip.innerHTML  =
+        "<b style='color:#cc0000'>" + labels[idx] + "</b><br>" +
+        "Avg buy-ins: " + avgUnits[idx] + "×<br>" +
+        "Total cashout: ₹" + cashoutRaw[idx].toLocaleString();
+    }} else {{
+      tooltip.style.display = "none";
+    }}
+  }});
+  canvas.addEventListener("mouseleave", () => {{ tooltip.style.display = "none"; }});
+</script>
+</body>
+</html>
+""", height=480)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 with c4:
     # World bubble map — Folium
