@@ -272,7 +272,7 @@ else:
 
 # Only show players with more than 5 sessions in charts
 qualified = df_f.groupby("Name")["Date"].nunique()
-qualified_players = qualified[qualified > 5].index
+qualified_players = qualified[qualified > 3].index
 df_f = df_f[df_f["Name"].isin(qualified_players)]
 
 # Hero Header
