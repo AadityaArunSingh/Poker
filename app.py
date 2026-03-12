@@ -699,6 +699,7 @@ with c4:
         "London, UK":    {"lat": 51.5074,  "lon": -0.1278,  "label": "London 🇬🇧"},
         "Thane, IND":    {"lat": 19.2183,  "lon": 72.9781,  "label": "Mumbai 🇮🇳"},
         "Adelaide, AUS": {"lat": -34.9285, "lon": 138.6007, "label": "Adelaide 🇦🇺"},
+        "Hyderabad, IND":  {"lat": 17.3850,  "lon": 78.4867,  "label": "Hyderabad 🇮🇳"},
     }
 
     # Group by location + player to get P/L per person per location
