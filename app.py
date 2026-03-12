@@ -737,6 +737,14 @@ with c4:
             {player_rows}
         </div>"""
 
+        # Offset anchors so nearby labels don't overlap
+        LABEL_OFFSETS = {
+            "London, UK":      (0, 12),
+            "Thane, IND":      (-60, -5),   # Mumbai — nudge left and up
+            "Hyderabad, IND":  (0, 25),     # Hyderabad — nudge down
+            "Adelaide, AUS":   (0, 12),
+        }
+
         folium.Marker(
             location=[coords["lat"], coords["lon"]],
             popup=folium.Popup(popup_html, max_width=250),
@@ -753,7 +761,7 @@ with c4:
                     box-shadow:0 2px 6px rgba(0,0,0,0.6);
                 ">{coords["label"]}</div>""",
                 icon_size=(120, 24),
-                icon_anchor=(0, 12),
+                icon_anchor=LABEL_OFFSETS.get(loc_key, (0, 12)),
             )
         ).add_to(fmap)
 
