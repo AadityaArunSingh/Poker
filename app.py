@@ -359,7 +359,7 @@ with st.container():
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
 
 # Row 2 — three equal columns
-c3, c4, c1 = st.columns(3)
+c1, c3 = st.columns(2)
 
 with c1:
     leaderboard = total_pl.sort_values(ascending=False).reset_index()
@@ -377,43 +377,31 @@ with c1:
     chart_card("♠ All-Time P/L Leaderboard", fig_bar, "bar")
 
 with c3:
-    # Count how many sessions each player had the highest P/L
     session_winners = df_f.loc[df_f.groupby("Date")["P/L"].idxmax()]["Name"]
-    wins_count = (
-        session_winners.value_counts()
-        .reset_index()
-    )
+    wins_count = session_winners.value_counts().reset_index()
     wins_count.columns = ["Player", "Sessions Won"]
 
-    def colour_wins(val):
-        if val == wins_count["Sessions Won"].max(): return "color: #cc0000; font-weight: bold"
-        return "color: #f0f0f0"
-
-    st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins</div>', unsafe_allow_html=True)
-    st.dataframe(
-        wins_count.style.applymap(colour_wins, subset=["Sessions Won"]),
-        use_container_width=True,
-        hide_index=True,
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with c4:
-    # Per player — best single session P/L
     pr = (
         df_f.groupby("Name")["P/L"].max()
         .reset_index()
-        .rename(columns={"Name": "Player", "P/L": "Best Session"})
-        .sort_values("Best Session", ascending=False)
-        .reset_index(drop=True)
+        .rename(columns={"P/L": "Best Session"})
     )
-    pr["Best Session"] = pr["Best Session"].apply(lambda x: f"₹{x:+,.0f}")
 
-    def colour_pr(val):
-        return "color: #cc0000; font-weight: bold"
+    combined = wins_count.merge(pr, on="Name") \
+        .sort_values("Sessions Won", ascending=False) \
+        .reset_index(drop=True)
+    combined["Best Session"] = combined["Best Session"].apply(lambda x: f"₹{x:+,.0f}")
 
-    st.markdown('<div class="chart-card"><div class="chart-card-title">♦ PR — Personal Record</div>', unsafe_allow_html=True)
+    def colour_combined(val):
+        if isinstance(val, (int, float)) and val == combined["Sessions Won"].max():
+            return "color: #cc0000; font-weight: bold"
+        if isinstance(val, str) and val.startswith("₹"):
+            return "color: #cc0000; font-weight: bold"
+        return "color: #f0f0f0"
+
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins & PR</div>', unsafe_allow_html=True)
     st.dataframe(
-        pr.style.applymap(colour_pr, subset=["Best Session"]),
+        combined.style.applymap(colour_combined, subset=["Sessions Won", "Best Session"]),
         use_container_width=True,
         hide_index=True,
     )
