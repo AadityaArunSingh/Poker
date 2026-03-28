@@ -344,7 +344,7 @@ def chart_card(title, fig, key):
     st.markdown("</div>", unsafe_allow_html=True)
 
 # charts on row 1
-c1, c2 = st.columns(2)
+c1, c2 = st.columns([1, 2])
 
 with c1:
     leaderboard = total_pl.sort_values(ascending=False).reset_index()
