@@ -343,8 +343,23 @@ def chart_card(title, fig, key):
     st.plotly_chart(fig, use_container_width=True, key=key)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# charts on row 1
-c1, c2 = st.columns([1, 2])
+# Row 1 — Cumulative P/L full width
+with st.container():
+    df_sorted = df_f.sort_values("Date")
+    df_cum = (
+        df_sorted.groupby(["Date", "Name"])["P/L"]
+        .sum().groupby(level=1).cumsum().reset_index()
+    )
+    fig_line = px.line(
+        df_cum, x="Date", y="P/L", color="Name", markers=True,
+        color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#ff00ea","#e67e22","#e74c3c","#f1c40f","#1abc9c","#e74c3c"]
+    )
+    fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
+    fig_line.update_layout(legend=dict(orientation="h", y=-0.15, x=0, xanchor="left"))
+    chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
+
+# Row 2 — three equal columns
+c3, c4, c1 = st.columns(3)
 
 with c1:
     leaderboard = total_pl.sort_values(ascending=False).reset_index()
@@ -360,23 +375,6 @@ with c1:
     ))
     fig_bar.update_layout(**PLOTLY_LAYOUT, yaxis_title="P/L (₹)")
     chart_card("♠ All-Time P/L Leaderboard", fig_bar, "bar")
-
-with c2:
-    df_sorted = df_f.sort_values("Date")
-    df_cum = (
-        df_sorted.groupby(["Date", "Name"])["P/L"]
-        .sum().groupby(level=1).cumsum().reset_index()
-    )
-    fig_line = px.line(
-    df_cum, x="Date", y="P/L", color="Name", markers=True,
-    color_discrete_sequence=["#3498db","#2ecc71","#f39c12","#9b59b6","#ff00ea","#e67e22","#e74c3c","#f1c40f"]
-    )
-    fig_line.update_layout(**PLOTLY_LAYOUT, yaxis_title="Cumulative P/L (₹)")
-    fig_line.update_layout(legend=dict(orientation="h", y=-0.25, x=0, xanchor="left"))
-    chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
-
-# charts on row 2
-c3, c4 = st.columns(2)
 
 with c3:
     # Count how many sessions each player had the highest P/L
