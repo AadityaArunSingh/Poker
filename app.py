@@ -379,21 +379,26 @@ with c2:
 c3, c4 = st.columns(2)
 
 with c3:
-    session_wins = (
-        df_f.loc[df_f.groupby("Date")["P/L"].idxmax()]
-        [["Date", "Name", "P/L", "Cashout"]]
-        .rename(columns={"Name": "Winner", "P/L": "Profit", "Cashout": "Walked Away With"})
-        .sort_values("Profit", ascending=False)
-        .reset_index(drop=True)
+    # Count how many sessions each player had the highest P/L
+    session_winners = df_f.loc[df_f.groupby("Date")["P/L"].idxmax()]["Name"]
+    wins_count = (
+        session_winners.value_counts()
+        .reset_index()
     )
-    session_wins["Date"] = session_wins["Date"].dt.strftime("%d %b %Y")
-    session_wins["Profit"] = session_wins["Profit"].apply(lambda x: f"₹{x:+,.0f}")
-    session_wins["Walked Away With"] = session_wins["Walked Away With"].apply(lambda x: f"₹{x:,.0f}")
+    wins_count.columns = ["Player", "Sessions Won"]
 
-    st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins — Who Took The Money</div>', unsafe_allow_html=True)
-    st.dataframe(session_wins, use_container_width=True, hide_index=True)
+    def colour_wins(val):
+        if val == wins_count["Sessions Won"].max(): return "color: #cc0000; font-weight: bold"
+        return "color: #f0f0f0"
+
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins</div>', unsafe_allow_html=True)
+    st.dataframe(
+        wins_count.style.applymap(colour_wins, subset=["Sessions Won"]),
+        use_container_width=True,
+        hide_index=True,
+    )
     st.markdown("</div>", unsafe_allow_html=True)
-
+    
 # sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
