@@ -359,7 +359,7 @@ with st.container():
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
 
 # Row 2 — three equal columns
-c1, c3 = st.columns(2)
+c3, c1 = st.columns(2)
 
 with c1:
     leaderboard = total_pl.sort_values(ascending=False).reset_index()
