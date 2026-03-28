@@ -384,10 +384,10 @@ with c3:
     pr = (
         df_f.groupby("Name")["P/L"].max()
         .reset_index()
-        .rename(columns={"P/L": "Best Session"})
+        .rename(columns={"Name": "Player", "P/L": "Best Session"})
     )
 
-    combined = wins_count.merge(pr, on="Name") \
+    combined = wins_count.merge(pr, on="Player") \
         .sort_values("Sessions Won", ascending=False) \
         .reset_index(drop=True)
     combined["Best Session"] = combined["Best Session"].apply(lambda x: f"₹{x:+,.0f}")
