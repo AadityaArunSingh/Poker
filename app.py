@@ -421,6 +421,34 @@ with c4:
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
+c5, = st.columns(1)
+
+with c5:
+    # All individual session P/L records ranked
+    all_profits = (
+        df_f[df_f["P/L"] > 0][["Name", "Date", "P/L"]]
+        .sort_values("P/L", ascending=False)
+        .reset_index(drop=True)
+    )
+    all_profits["Rank"] = ["#" + str(i+1) for i in range(len(all_profits))]
+    all_profits["Date"] = all_profits["Date"].dt.strftime("%d %b %Y")
+    all_profits["P/L"] = all_profits["P/L"].apply(lambda x: f"₹{x:+,.0f}")
+    all_profits = all_profits[["Rank", "Name", "P/L", "Date"]]
+
+    def colour_rank(val):
+        if val == "#1": return "color: #FFD700; font-weight: bold"
+        if val == "#2": return "color: #C0C0C0; font-weight: bold"
+        if val == "#3": return "color: #CD7F32; font-weight: bold"
+        return "color: #f0f0f0"
+
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♠ All-Time Profit Rankings</div>', unsafe_allow_html=True)
+    st.dataframe(
+        all_profits.style.applymap(colour_rank, subset=["Rank"]),
+        use_container_width=True,
+        hide_index=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
