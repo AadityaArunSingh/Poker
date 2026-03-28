@@ -398,7 +398,29 @@ with c3:
         hide_index=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
+with c4:
+    # Per player — best single session P/L
+    pr = (
+        df_f.groupby("Name")["P/L"].max()
+        .reset_index()
+        .rename(columns={"Name": "Player", "P/L": "Best Session"})
+        .sort_values("Best Session", ascending=False)
+        .reset_index(drop=True)
+    )
+    pr["Best Session"] = pr["Best Session"].apply(lambda x: f"₹{x:+,.0f}")
+
+    def colour_pr(val):
+        return "color: #cc0000; font-weight: bold"
+
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♦ PR — Personal Record</div>', unsafe_allow_html=True)
+    st.dataframe(
+        pr.style.applymap(colour_pr, subset=["Best Session"]),
+        use_container_width=True,
+        hide_index=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
