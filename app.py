@@ -378,6 +378,22 @@ with c2:
 # charts on row 2
 c3, c4 = st.columns(2)
 
+with c3:
+    session_wins = (
+        df_f.loc[df_f.groupby("Date")["P/L"].idxmax()]
+        [["Date", "Name", "P/L", "Cashout"]]
+        .rename(columns={"Name": "Winner", "P/L": "Profit", "Cashout": "Walked Away With"})
+        .sort_values("Profit", ascending=False)
+        .reset_index(drop=True)
+    )
+    session_wins["Date"] = session_wins["Date"].dt.strftime("%d %b %Y")
+    session_wins["Profit"] = session_wins["Profit"].apply(lambda x: f"₹{x:+,.0f}")
+    session_wins["Walked Away With"] = session_wins["Walked Away With"].apply(lambda x: f"₹{x:,.0f}")
+
+    st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins — Who Took The Money</div>', unsafe_allow_html=True)
+    st.dataframe(session_wins, use_container_width=True, hide_index=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # sesh breakdown
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
