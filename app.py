@@ -14,6 +14,53 @@ st.set_page_config(
 # CSS
 st.markdown("""
 <style>
+            
+/* ── Floating month filter button ── */
+#month-toggle-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b0000, #cc0000);
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(204,0,0,0.5);
+    z-index: 9999;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#month-toggle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(204,0,0,0.7);
+}
+#month-toggle-tooltip {
+    position: fixed;
+    bottom: 5.2rem;
+    right: 1.2rem;
+    background: #111;
+    color: #aaa;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    z-index: 9999;
+}
+#month-toggle-btn:hover + #month-toggle-tooltip,
+#month-toggle-tooltip.visible {
+    opacity: 1;
+}
+            
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap');
 
 /* ── Base ── */
@@ -279,7 +326,20 @@ if len(date_range) == 2:
 else:
     df_f = df[df["Name"].isin(selected_players)]
 
-# Only show players with more than 5 sessions in charts
+# Apply month filter if button active
+from datetime import date
+import urllib.parse
+try:
+    month_active = st.query_params.get("month_filter", "0") == "1"
+except:
+    month_active = False
+
+if month_active:
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    df_f = df_f[df_f["Date"].dt.date >= month_start]
+
+# Only show players with more than 3 sessions in charts
 qualified = df_f.groupby("Name")["Date"].nunique()
 qualified_players = qualified[qualified > 3].index
 df_f = df_f[df_f["Name"].isin(qualified_players)]
@@ -462,6 +522,38 @@ st.dataframe(
     hide_index=True,
 )
 st.markdown("</div>", unsafe_allow_html=True)
+
+# Floating calendar button — month filter toggle
+from datetime import date
+current_month_active = st.session_state.get("month_filter_active", False)
+
+st.markdown(f"""
+<button id="month-toggle-btn" onclick="
+    const params = new URLSearchParams(window.location.search);
+    const active = params.get('month_filter') === '1';
+    if (active) {{
+        params.delete('month_filter');
+    }} else {{
+        params.set('month_filter', '1');
+    }}
+    window.location.search = params.toString();
+" title="">{'🗓️' if not current_month_active else '⏱️'}</button>
+<div id="month-toggle-tooltip">{'this month' if not current_month_active else 'all time'}</div>
+""", unsafe_allow_html=True)
+
+# Read URL param to apply month filter
+import urllib.parse
+try:
+    query = st.query_params
+    month_active = query.get("month_filter", "0") == "1"
+except:
+    month_active = False
+
+if month_active:
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    df_f = df_f[df_f["Date"].dt.date >= month_start]
+    st.toast(f"📅 Showing {today.strftime('%B %Y')} only", icon="🗓️")
 
 # raw
 # with st.expander("📋 Full Raw Data"):
