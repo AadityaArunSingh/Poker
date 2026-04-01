@@ -277,15 +277,26 @@ with st.sidebar:
     )
 
 # ── Build df_f (apply filters once) ──
-if len(date_range) == 2:
-    start, end = date_range
+if month_active:
+    # Month filter overrides the date range picker entirely
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
     df_f = df[
         (df["Name"].isin(selected_players)) &
-        (df["Date"].dt.date >= start) &
-        (df["Date"].dt.date <= end)
+        (df["Date"].dt.date >= month_start) &
+        (df["Date"].dt.date <= today)
     ]
+    st.toast(f"📅 {today.strftime('%B %Y')} only", icon="🗓️")
 else:
-    df_f = df[df["Name"].isin(selected_players)]
+    if len(date_range) == 2:
+        start, end = date_range
+        df_f = df[
+            (df["Name"].isin(selected_players)) &
+            (df["Date"].dt.date >= start) &
+            (df["Date"].dt.date <= end)
+        ]
+    else:
+        df_f = df[df["Name"].isin(selected_players)]
 
 # ── Apply month filter if active ──
 if month_active:
@@ -294,8 +305,8 @@ if month_active:
     df_f = df_f[df_f["Date"].dt.date >= month_start]
     st.toast(f"📅 {today.strftime('%B %Y')} only", icon="🗓️")
 
-# ── Only players with more than 3 sessions ──
-qualified = df_f.groupby("Name")["Date"].nunique()
+# ── Qualified players (always based on full dataset) ──
+qualified = df.groupby("Name")["Date"].nunique()
 qualified_players = qualified[qualified > 3].index
 df_f = df_f[df_f["Name"].isin(qualified_players)]
 
