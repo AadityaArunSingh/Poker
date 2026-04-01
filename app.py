@@ -161,14 +161,21 @@ html, body, [class*="css"] {
     opacity: 1;
 }
 
-[data-testid="stToggle"] p {
+/* ── Toggle switch font ── */
+[data-testid="stToggle"] label {
     font-family: 'DM Mono', monospace !important;
     font-size: 0.7rem !important;
     letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
     color: #888 !important;
-}            
-
+}
+[data-testid="stToggle"] [data-testid="stMarkdownContainer"] p {
+    font-family: 'DM Mono', monospace !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: #888 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
