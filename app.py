@@ -7,7 +7,7 @@ from datetime import date
 st.set_page_config(
     page_title="🃏 जुआरी Dashboard",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # CSS
@@ -20,21 +20,10 @@ html, body, [class*="css"] {
     color: #f0f0f0 !important;
     font-family: 'DM Mono', monospace !important;
 }
-[data-testid="stSidebar"] {
-    background: #0f0f0f !important;
-    border-right: 1px solid #2a0a0a !important;
-}
-[data-testid="stSidebar"] * { color: #f0f0f0 !important; }
-[data-testid="stSidebarNav"] { display: none; }
-[data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
-    background-color: #8b0000 !important;
-}
-[data-testid="stSidebar"] .stMultiSelect [data-baseweb="select"] > div,
-[data-testid="stSidebar"] .stDateInput input {
-    background-color: #1a1a1a !important;
-    border: 1px solid #8b0000 !important;
-    color: #f0f0f0 !important;
-}
+[data-testid="stSidebar"] { display: none !important; }
+[data-testid="stSidebarNav"] { display: none !important; }
+[data-testid="collapsedControl"] { display: none !important; }
+
 .hero-title {
     text-align: center;
     font-family: 'Playfair Display', serif;
@@ -111,26 +100,6 @@ html, body, [class*="css"] {
     border-bottom: 1px solid #1f0a0a;
     padding-bottom: 0.5rem;
 }
-.sidebar-heading {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #cc0000;
-    margin-bottom: 0.3rem;
-}
-[data-testid="stButton"] button {
-    background: linear-gradient(135deg, #8b0000, #cc0000) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 4px !important;
-    font-family: 'DM Mono', monospace !important;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.1em !important;
-    padding: 0.4rem 1rem !important;
-    width: 100% !important;
-    transition: opacity 0.2s !important;
-}
-[data-testid="stButton"] button:hover { opacity: 0.85 !important; }
 [data-testid="stDataFrame"] {
     background: #0f0f0f !important;
     border: 1px solid #1f0a0a !important;
@@ -141,31 +110,11 @@ html, body, [class*="css"] {
     border-color: #8b0000 !important;
     color: #f0f0f0 !important;
 }
-[data-testid="stExpander"] {
-    background: #111 !important;
-    border: 1px solid #1f0a0a !important;
-    border-radius: 6px !important;
-}
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #8b0000; border-radius: 2px; }
-</style>
-""", unsafe_allow_html=True)
 
-# ── Month filter state (read once from query params) ──
-try:
-    month_active = st.query_params.get("month_filter", "0") == "1"
-except:
-    month_active = False
-
-# ── Floating button ──
-btn_emoji = "⏱️" if month_active else "🗓️"
-btn_tooltip = "All time" if month_active else "This month"
-next_val = "0" if month_active else "1"
-
-st.markdown(f"""
-<style>
-#float-month-btn {{
+#float-month-btn {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
@@ -184,12 +133,12 @@ st.markdown(f"""
     z-index: 9999;
     transition: transform 0.2s, box-shadow 0.2s;
     line-height: 1;
-}}
-#float-month-btn:hover {{
+}
+#float-month-btn:hover {
     transform: scale(1.12);
     box-shadow: 0 6px 24px rgba(204,0,0,0.65);
-}}
-#float-month-tooltip {{
+}
+#float-month-tooltip {
     position: fixed;
     bottom: 5.2rem;
     right: 1.2rem;
@@ -207,11 +156,24 @@ st.markdown(f"""
     transition: opacity 0.2s;
     white-space: nowrap;
     z-index: 9999;
-}}
-#float-month-btn:hover + #float-month-tooltip {{
+}
+#float-month-btn:hover + #float-month-tooltip {
     opacity: 1;
-}}
+}
 </style>
+""", unsafe_allow_html=True)
+
+# ── Month filter state ──
+try:
+    month_active = st.query_params.get("month_filter", "0") == "1"
+except:
+    month_active = False
+
+btn_emoji = "⏱️" if month_active else "🗓️"
+btn_tooltip = "Switch to all time" if month_active else "Switch to this month"
+next_val = "0" if month_active else "1"
+
+st.markdown(f"""
 <button id="float-month-btn" onclick="
     const u = new URL(window.location.href);
     u.searchParams.set('month_filter', '{next_val}');
@@ -248,64 +210,19 @@ def load_data():
 
 df = load_data()
 
-# ── Sidebar filters ──
-with st.sidebar:
-    st.markdown('<div class="sidebar-heading">♠ Filters</div>', unsafe_allow_html=True)
-
-    all_players = sorted(df["Name"].unique())
-    all_dates = sorted(df["Date"].dt.date.unique())
-
-    selected_players = st.multiselect("Players", all_players, default=all_players)
-
-    date_range = st.date_input(
-        "Date Range",
-        value=(min(all_dates), max(all_dates)),
-        min_value=min(all_dates),
-        max_value=max(all_dates),
-    )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔄 Refresh Data"):
-        st.cache_data.clear()
-        st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<hr style="border-color:#1f0a0a">', unsafe_allow_html=True)
-    st.markdown(
-        '<div style="font-size:0.65rem;color:#444;text-align:center;letter-spacing:0.1em">AUTO-REFRESHES EVERY 5 MIN</div>',
-        unsafe_allow_html=True
-    )
-
-# ── Build df_f (apply filters once) ──
+# ── Build df_f ──
 if month_active:
-    # Month filter overrides the date range picker entirely
     today = date.today()
     month_start = date(today.year, today.month, 1)
     df_f = df[
-        (df["Name"].isin(selected_players)) &
         (df["Date"].dt.date >= month_start) &
         (df["Date"].dt.date <= today)
     ]
     st.toast(f"📅 {today.strftime('%B %Y')} only", icon="🗓️")
 else:
-    if len(date_range) == 2:
-        start, end = date_range
-        df_f = df[
-            (df["Name"].isin(selected_players)) &
-            (df["Date"].dt.date >= start) &
-            (df["Date"].dt.date <= end)
-        ]
-    else:
-        df_f = df[df["Name"].isin(selected_players)]
+    df_f = df.copy()
 
-# ── Apply month filter if active ──
-if month_active:
-    today = date.today()
-    month_start = date(today.year, today.month, 1)
-    df_f = df_f[df_f["Date"].dt.date >= month_start]
-    st.toast(f"📅 {today.strftime('%B %Y')} only", icon="🗓️")
-
-# ── Qualified players (always based on full dataset) ──
+# ── Qualified players based on full dataset ──
 qualified = df.groupby("Name")["Date"].nunique()
 qualified_players = qualified[qualified > 3].index
 df_f = df_f[df_f["Name"].isin(qualified_players)]
