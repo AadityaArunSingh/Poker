@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import folium
-from streamlit_folium import st_folium
+from datetime import date
 
 st.set_page_config(
     page_title="🃏 जुआरी Dashboard",
@@ -14,52 +13,19 @@ st.set_page_config(
 # CSS
 st.markdown("""
 <style>
-            
-/* Floating Button Styling */
-.stButton > button.floating-btn {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 60px;
-    height: 60px;
-    border-radius: 50% !important;
-    background: linear-gradient(135deg, #8b0000, #cc0000) !important;
-    color: white !important;
-    font-size: 24px !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(204, 0, 0, 0.4);
-    border: none !important;
-    z-index: 1000;
-    transition: all 0.3s ease;
-}
-
-.stButton > button.floating-btn:hover {
-    transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 6px 20px rgba(204, 0, 0, 0.6);
-}
-            
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap');
 
-/* ── Base ── */
 html, body, [class*="css"] {
     background-color: #0a0a0a !important;
     color: #f0f0f0 !important;
     font-family: 'DM Mono', monospace !important;
 }
-
-/* ── Sidebar ── */
 [data-testid="stSidebar"] {
     background: #0f0f0f !important;
     border-right: 1px solid #2a0a0a !important;
 }
-[data-testid="stSidebar"] * {
-    color: #f0f0f0 !important;
-}
+[data-testid="stSidebar"] * { color: #f0f0f0 !important; }
 [data-testid="stSidebarNav"] { display: none; }
-
-/* ── Sidebar widgets ── */
 [data-testid="stSidebar"] .stMultiSelect [data-baseweb="tag"] {
     background-color: #8b0000 !important;
 }
@@ -69,8 +35,6 @@ html, body, [class*="css"] {
     border: 1px solid #8b0000 !important;
     color: #f0f0f0 !important;
 }
-
-/* ── Hero title ── */
 .hero-title {
     text-align: center;
     font-family: 'Playfair Display', serif;
@@ -80,7 +44,7 @@ html, body, [class*="css"] {
     letter-spacing: 0.04em;
     line-height: 1.1;
     padding: 1.2rem 0 0.2rem;
-    text-shadow: 0 0 40px rgba(180, 0, 0, 0.6), 0 2px 4px rgba(0,0,0,0.8);
+    text-shadow: 0 0 40px rgba(180,0,0,0.6), 0 2px 4px rgba(0,0,0,0.8);
 }
 .hero-subtitle {
     text-align: center;
@@ -98,17 +62,12 @@ html, body, [class*="css"] {
     padding-bottom: 0.5rem;
     opacity: 0.7;
 }
-        
-
-/* ── Divider ── */
 .red-divider {
     border: none;
     height: 1px;
     background: linear-gradient(to right, transparent, #8b0000, #cc0000, #8b0000, transparent);
     margin: 1rem 0 1.5rem;
 }
-
-/* ── Metric cards ── */
 [data-testid="stMetric"] {
     background: linear-gradient(135deg, #141414 0%, #1a0a0a 100%) !important;
     border: 1px solid #2a0a0a !important;
@@ -133,16 +92,6 @@ html, body, [class*="css"] {
     font-family: 'DM Mono', monospace !important;
     font-size: 0.85rem !important;
 }
-            
-/* Biggest Spender delta — force red */
-[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] svg path {
-    fill: #cc0000 !important;
-}
-[data-testid="stMetric"]:nth-child(2) [data-testid="stMetricDelta"] > div {
-    color: #cc0000 !important;
-}
-
-/* ── Chart cards ── */
 .chart-card {
     background: linear-gradient(160deg, #111111 0%, #0d0505 100%);
     border: 1px solid #1f0a0a;
@@ -162,8 +111,6 @@ html, body, [class*="css"] {
     border-bottom: 1px solid #1f0a0a;
     padding-bottom: 0.5rem;
 }
-
-/* ── Sidebar filter heading ── */
 .sidebar-heading {
     font-family: 'Playfair Display', serif;
     font-size: 1.3rem;
@@ -171,15 +118,6 @@ html, body, [class*="css"] {
     color: #cc0000;
     margin-bottom: 0.3rem;
 }
-.sidebar-sub {
-    font-size: 0.68rem;
-    color: #555;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 1.2rem;
-}
-
-/* ── Refresh button ── */
 [data-testid="stButton"] button {
     background: linear-gradient(135deg, #8b0000, #cc0000) !important;
     color: white !important;
@@ -193,36 +131,96 @@ html, body, [class*="css"] {
     transition: opacity 0.2s !important;
 }
 [data-testid="stButton"] button:hover { opacity: 0.85 !important; }
-
-/* ── Dataframe ── */
 [data-testid="stDataFrame"] {
     background: #0f0f0f !important;
     border: 1px solid #1f0a0a !important;
     border-radius: 6px !important;
 }
-
-/* ── Selectbox ── */
 [data-baseweb="select"] > div {
     background-color: #1a1a1a !important;
     border-color: #8b0000 !important;
     color: #f0f0f0 !important;
 }
-
-/* ── Expander ── */
 [data-testid="stExpander"] {
     background: #111 !important;
     border: 1px solid #1f0a0a !important;
     border-radius: 6px !important;
 }
-
-/* scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #8b0000; border-radius: 2px; }
 </style>
 """, unsafe_allow_html=True)
 
-# Dark template
+# ── Month filter state (read once from query params) ──
+try:
+    month_active = st.query_params.get("month_filter", "0") == "1"
+except:
+    month_active = False
+
+# ── Floating button ──
+btn_emoji = "⏱️" if month_active else "🗓️"
+btn_tooltip = "All time" if month_active else "This month"
+next_val = "0" if month_active else "1"
+
+st.markdown(f"""
+<style>
+#float-month-btn {{
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b0000, #cc0000);
+    border: none;
+    color: white;
+    font-size: 26px;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(204,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: transform 0.2s, box-shadow 0.2s;
+    line-height: 1;
+}}
+#float-month-btn:hover {{
+    transform: scale(1.12);
+    box-shadow: 0 6px 24px rgba(204,0,0,0.65);
+}}
+#float-month-tooltip {{
+    position: fixed;
+    bottom: 5.2rem;
+    right: 1.2rem;
+    background: #1a0a0a;
+    border: 1px solid #8b0000;
+    color: #f0f0f0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    z-index: 9999;
+}}
+#float-month-btn:hover + #float-month-tooltip {{
+    opacity: 1;
+}}
+</style>
+<button id="float-month-btn" onclick="
+    const u = new URL(window.location.href);
+    u.searchParams.set('month_filter', '{next_val}');
+    window.location.href = u.toString();
+">{btn_emoji}</button>
+<div id="float-month-tooltip">{btn_tooltip}</div>
+""", unsafe_allow_html=True)
+
+# ── Plotly dark template ──
 PLOTLY_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
@@ -233,11 +231,10 @@ PLOTLY_LAYOUT = dict(
     yaxis=dict(gridcolor="#1a1a1a", linecolor="#333", tickcolor="#333"),
 )
 
-# Config
+# ── Data ──
 SHEET_ID = "1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ"
 CSV_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv"
 
-# Data loading
 @st.cache_data(ttl=300)
 def load_data():
     df = pd.read_csv(CSV_URL)
@@ -251,37 +248,14 @@ def load_data():
 
 df = load_data()
 
-# Initialize state
-if 'month_filter' not in st.session_state:
-    st.session_state.month_filter = False
-
-# Function to toggle
-def toggle_month():
-    st.session_state.month_filter = not st.session_state.month_filter
-
-# Create the floating button using a container to inject the class
-st.markdown('<div class="floating-container">', unsafe_allow_html=True)
-st.button("🗓️" if not st.session_state.month_filter else "🔙", 
-          on_click=toggle_month, 
-          key="float_btn", 
-          help="Toggle Current Month / All Time",
-          type="primary")
-# Inject the CSS class into the button we just created
-st.markdown('<style>div[data-testid="stButton"] > button:has(div:contains("🗓️")), div[data-testid="stButton"] > button:has(div:contains("🔙")) { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; border-radius: 50% !important; background: linear-gradient(135deg, #8b0000, #cc0000) !important; font-size: 24px !important; z-index: 999; }</style>', unsafe_allow_html=True)
-
-# filters
+# ── Sidebar filters ──
 with st.sidebar:
     st.markdown('<div class="sidebar-heading">♠ Filters</div>', unsafe_allow_html=True)
-    # st.markdown('<div class="sidebar-sub">Adjust your view</div>', unsafe_allow_html=True)
 
     all_players = sorted(df["Name"].unique())
     all_dates = sorted(df["Date"].dt.date.unique())
 
-    selected_players = st.multiselect(
-        "Players",
-        all_players,
-        default=all_players,
-    )
+    selected_players = st.multiselect("Players", all_players, default=all_players)
 
     date_range = st.date_input(
         "Date Range",
@@ -302,7 +276,7 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-# apply filters 
+# ── Build df_f (apply filters once) ──
 if len(date_range) == 2:
     start, end = date_range
     df_f = df[
@@ -313,57 +287,35 @@ if len(date_range) == 2:
 else:
     df_f = df[df["Name"].isin(selected_players)]
 
-if len(date_range) == 2:
-    start, end = date_range
-    df_f = df[
-        (df["Name"].isin(selected_players)) &
-        (df["Date"].dt.date >= start) &
-        (df["Date"].dt.date <= end)
-    ]
-else:
-    df_f = df[df["Name"].isin(selected_players)]
-
-# Apply month filter if button active
-from datetime import date
-import urllib.parse
-try:
-    month_active = st.query_params.get("month_filter", "0") == "1"
-except:
-    month_active = False
-
+# ── Apply month filter if active ──
 if month_active:
     today = date.today()
     month_start = date(today.year, today.month, 1)
     df_f = df_f[df_f["Date"].dt.date >= month_start]
+    st.toast(f"📅 {today.strftime('%B %Y')} only", icon="🗓️")
 
-# Only show players with more than 3 sessions in charts
+# ── Only players with more than 3 sessions ──
 qualified = df_f.groupby("Name")["Date"].nunique()
 qualified_players = qualified[qualified > 3].index
 df_f = df_f[df_f["Name"].isin(qualified_players)]
 
-# Hero Header
+# ── Hero Header ──
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">JUAARI DASHBOARD</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">Gambling addiction tracker</div>', unsafe_allow_html=True)
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
-# KPI
+# ── KPIs ──
 total_pl = df_f.groupby("Name")["P/L"].sum()
 sessions_per_player = df_f.groupby("Name")["Date"].nunique()
 sessions_count = df_f["Date"].nunique()
 
 biggest_winner = total_pl.idxmax() if not total_pl.empty else "N/A"
 biggest_loser  = total_pl.idxmin() if not total_pl.empty else "N/A"
-most_active    = sessions_per_player.idxmax() if not sessions_per_player.empty else "N/A"
 
-# Players who attended every session
 total_sessions = df_f["Date"].nunique()
-full_attendance = [
-    p for p in sessions_per_player.index
-    if sessions_per_player[p] == total_sessions
-]
+full_attendance = [p for p in sessions_per_player.index if sessions_per_player[p] == total_sessions]
 regulars_str = ", ".join(full_attendance) if full_attendance else "None"
-# Truncate if too long
 if len(regulars_str) > 28:
     regulars_str = regulars_str[:25] + "…"
 
@@ -394,13 +346,13 @@ kpi_card(k4, "♣ Table Regulars",  regulars_str)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# wrapper for plotly viz inside a card
+# ── Chart card wrapper ──
 def chart_card(title, fig, key):
     st.markdown(f'<div class="chart-card"><div class="chart-card-title">{title}</div>', unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True, key=key)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Row 1 — Cumulative P/L full width
+# ── Cumulative P/L ──
 with st.container():
     df_sorted = df_f.sort_values("Date")
     df_cum = (
@@ -415,7 +367,7 @@ with st.container():
     fig_line.update_layout(legend=dict(orientation="h", y=-0.15, x=0, xanchor="left"))
     chart_card("♥ Cumulative P/L Over Time", fig_line, "line")
 
-# Row 2 — three equal columns
+# ── Leaderboard + Session Wins ──
 c3, c1 = st.columns(2)
 
 with c1:
@@ -464,35 +416,7 @@ with c3:
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-# c5, = st.columns(1)
-
-# with c5:
-#     # All individual session P/L records ranked
-#     all_profits = (
-#         df_f[df_f["P/L"] > 0][["Name", "Date", "P/L"]]
-#         .sort_values("P/L", ascending=False)
-#         .reset_index(drop=True)
-#     )
-#     all_profits["Rank"] = ["#" + str(i+1) for i in range(len(all_profits))]
-#     all_profits["Date"] = all_profits["Date"].dt.strftime("%d %b %Y")
-#     all_profits["P/L"] = all_profits["P/L"].apply(lambda x: f"₹{x:+,.0f}")
-#     all_profits = all_profits[["Rank", "Name", "P/L", "Date"]]
-
-#     def colour_rank(val):
-#         if val == "#1": return "color: #FFD700; font-weight: bold"
-#         if val == "#2": return "color: #C0C0C0; font-weight: bold"
-#         if val == "#3": return "color: #CD7F32; font-weight: bold"
-#         return "color: #f0f0f0"
-
-#     st.markdown('<div class="chart-card"><div class="chart-card-title">♠ All-Time Profit Rankings</div>', unsafe_allow_html=True)
-#     st.dataframe(
-#         all_profits.style.applymap(colour_rank, subset=["Rank"]),
-#         use_container_width=True,
-#         hide_index=True,
-#     )
-#     st.markdown("</div>", unsafe_allow_html=True)
-
-# sesh breakdown
+# ── Session Breakdown ──
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
 sessions_list = sorted(df_f["Date"].dt.date.unique(), reverse=True)
@@ -505,8 +429,8 @@ session_df = df_f[df_f["Date"].dt.date == selected_session][
 ].sort_values("P/L", ascending=False).reset_index(drop=True)
 
 def colour_pl(val):
-    if val > 0:  return "color: #cc0000; font-weight: bold"
-    if val < 0:  return "color: #660000; font-weight: bold"
+    if val > 0: return "color: #cc0000; font-weight: bold"
+    if val < 0: return "color: #660000; font-weight: bold"
     return "color: #555"
 
 st.markdown(
@@ -519,40 +443,3 @@ st.dataframe(
     hide_index=True,
 )
 st.markdown("</div>", unsafe_allow_html=True)
-
-# Floating calendar button — month filter toggle
-from datetime import date
-current_month_active = st.session_state.get("month_filter_active", False)
-
-st.markdown(f"""
-<button id="month-toggle-btn" onclick="
-    const params = new URLSearchParams(window.location.search);
-    const active = params.get('month_filter') === '1';
-    if (active) {{
-        params.delete('month_filter');
-    }} else {{
-        params.set('month_filter', '1');
-    }}
-    window.location.search = params.toString();
-" title="">{'🗓️' if not current_month_active else '⏱️'}</button>
-<div id="month-toggle-tooltip">{'this month' if not current_month_active else 'all time'}</div>
-""", unsafe_allow_html=True)
-
-# Read URL param to apply month filter
-import urllib.parse
-try:
-    query = st.query_params
-    month_active = query.get("month_filter", "0") == "1"
-except:
-    month_active = False
-
-if month_active:
-    today = date.today()
-    month_start = date(today.year, today.month, 1)
-    df_f = df_f[df_f["Date"].dt.date >= month_start]
-    st.toast(f"📅 Showing {today.strftime('%B %Y')} only", icon="🗓️")
-
-# raw
-# with st.expander("📋 Full Raw Data"):
-#     st.dataframe(df_f.sort_values("Date", ascending=False).reset_index(drop=True), use_container_width=True)
-
