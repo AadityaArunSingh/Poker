@@ -163,60 +163,20 @@ html, body, [class*="css"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ── Month filter via query params ──
+# ── Month filter toggle ──
 try:
     month_active = st.query_params.get("month_filter", "0") == "1"
 except:
     month_active = False
 
-btn_emoji   = "⏱️" if month_active else "🗓️"
-btn_tooltip = "All time" if month_active else "This month"
-next_val    = "0" if month_active else "1"
-
-st.markdown(f"""
-<div id="fab-wrap" style="
-    position:fixed; bottom:2rem; right:2rem; z-index:9999;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-">
-    <div id="fab-tip" style="
-        background:#1a0a0a; border:1px solid #8b0000; color:#f0f0f0;
-        font-family:'DM Mono',monospace; font-size:0.65rem;
-        letter-spacing:0.1em; text-transform:uppercase;
-        padding:3px 8px; border-radius:4px; white-space:nowrap;
-        opacity:0; transition:opacity 0.2s; pointer-events:none;
-    ">{btn_tooltip}</div>
-    <button onclick="
-        const u = new URL(window.parent.location.href);
-        u.searchParams.set('month_filter', '{next_val}');
-        window.parent.location.href = u.toString();
-    " onmouseenter="document.getElementById('fab-tip').style.opacity=1"
-      onmouseleave="document.getElementById('fab-tip').style.opacity=0"
-    style="
-        width:54px; height:54px; border-radius:50%;
-        background:linear-gradient(135deg,#8b0000,#cc0000);
-        border:none; color:white; font-size:24px;
-        cursor:pointer;
-        box-shadow:0 4px 18px rgba(204,0,0,0.5);
-        transition:transform 0.2s, box-shadow 0.2s;
-        display:flex; align-items:center; justify-content:center;
-        line-height:1;
-    "
-    onmousedown="this.style.transform='scale(0.95)'"
-    onmouseup="this.style.transform='scale(1.08)'"
-    >{btn_emoji}</button>
-</div>
-""", unsafe_allow_html=True)
-
-# ── Plotly dark template ──
-PLOTLY_LAYOUT = dict(
-    paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(family="DM Mono, monospace", color="#aaa", size=11),
-    margin=dict(l=10, r=10, t=10, b=10),
-    legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color="#aaa")),
-    xaxis=dict(gridcolor="#1a1a1a", linecolor="#333", tickcolor="#333"),
-    yaxis=dict(gridcolor="#1a1a1a", linecolor="#333", tickcolor="#333"),
-)
+col_left, col_toggle, col_right = st.columns([4, 1, 4])
+with col_toggle:
+    if st.toggle("This month only", value=month_active, key="month_toggle"):
+        st.query_params["month_filter"] = "1"
+        month_active = True
+    else:
+        st.query_params["month_filter"] = "0"
+        month_active = False
 
 # ── Data ──
 SHEET_ID = "1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ"
@@ -244,10 +204,10 @@ if month_active:
 else:
     df_f = df.copy()
 
-# ── Qualified players (based on full dataset so filter doesn't break) ──
-qualified        = df.groupby("Name")["Date"].nunique()
+# ── Qualified players ──
+qualified         = df.groupby("Name")["Date"].nunique()
 qualified_players = qualified[qualified > 3].index
-df_f             = df_f[df_f["Name"].isin(qualified_players)]
+df_f              = df_f[df_f["Name"].isin(qualified_players)]
 
 # ── Hero Header ──
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
