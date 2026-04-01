@@ -209,6 +209,17 @@ qualified         = df.groupby("Name")["Date"].nunique()
 qualified_players = qualified[qualified > 3].index
 df_f              = df_f[df_f["Name"].isin(qualified_players)]
 
+# ── Plotly dark template ──
+PLOTLY_LAYOUT = dict(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="DM Mono, monospace", color="#aaa", size=11),
+    margin=dict(l=10, r=10, t=10, b=10),
+    legend=dict(bgcolor="rgba(0,0,0,0)", font=dict(color="#aaa")),
+    xaxis=dict(gridcolor="#1a1a1a", linecolor="#333", tickcolor="#333"),
+    yaxis=dict(gridcolor="#1a1a1a", linecolor="#333", tickcolor="#333"),
+)
+
 # ── Hero Header ──
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">JUAARI DASHBOARD</div>', unsafe_allow_html=True)
