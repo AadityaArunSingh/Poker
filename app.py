@@ -160,6 +160,15 @@ html, body, [class*="css"] {
 #float-month-btn:hover + #float-month-tooltip {
     opacity: 1;
 }
+
+[data-testid="stToggle"] p {
+    font-family: 'DM Mono', monospace !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    color: #888 !important;
+}            
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -168,15 +177,6 @@ try:
     month_active = st.query_params.get("month_filter", "0") == "1"
 except:
     month_active = False
-
-col_left, col_toggle, col_right = st.columns([4, 1, 4])
-with col_toggle:
-    if st.toggle("This month only", value=month_active, key="month_toggle"):
-        st.query_params["month_filter"] = "1"
-        month_active = True
-    else:
-        st.query_params["month_filter"] = "0"
-        month_active = False
 
 # ── Data ──
 SHEET_ID = "1N0f0momimoEEWxqmxSrthV3IxkQIMpxczoLIbHw5XsQ"
@@ -224,6 +224,16 @@ PLOTLY_LAYOUT = dict(
 st.markdown('<div class="suit-row">♠ ♥ ♦ ♣</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">JUAARI DASHBOARD</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-subtitle">Gambling addiction tracker</div>', unsafe_allow_html=True)
+
+col_left, col_toggle, col_right = st.columns([4, 1, 4])
+with col_toggle:
+    if st.toggle("This month only", value=month_active, key="month_toggle"):
+        st.query_params["month_filter"] = "1"
+        month_active = True
+    else:
+        st.query_params["month_filter"] = "0"
+        month_active = False
+
 st.markdown('<hr class="red-divider">', unsafe_allow_html=True)
 
 # ── KPIs ──
