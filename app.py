@@ -71,16 +71,5 @@ with c_left:
 with c_right:
     render_leaderboard(kpis["total_pl"])
 
-# ── Row 3: Greed Radar | World Map ─────────────────────────────────────────────
-c_radar, c_map = st.columns(2)
-with c_radar:
-    render_greed_radar(df_f)
-with c_map:
-    render_map(df_f)
-
-# ── All-Time Rankings (full width) ─────────────────────────────────────────────
-with st.container():
-    render_all_time_rankings(df_f)
-
 # ── Session Results ─────────────────────────────────────────────────────────────
 render_session_results(df_f)
