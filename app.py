@@ -15,50 +15,29 @@ st.set_page_config(
 st.markdown("""
 <style>
             
-/* ── Floating month filter button ── */
-#month-toggle-btn {
+/* Floating Button Styling */
+.stButton > button.floating-btn {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #8b0000, #cc0000);
-    border: none;
-    font-size: 1.4rem;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(204,0,0,0.5);
-    z-index: 9999;
-    transition: transform 0.2s, box-shadow 0.2s;
+    width: 60px;
+    height: 60px;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #8b0000, #cc0000) !important;
+    color: white !important;
+    font-size: 24px !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 15px rgba(204, 0, 0, 0.4);
+    border: none !important;
+    z-index: 1000;
+    transition: all 0.3s ease;
 }
-#month-toggle-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 28px rgba(204,0,0,0.7);
-}
-#month-toggle-tooltip {
-    position: fixed;
-    bottom: 5.2rem;
-    right: 1.2rem;
-    background: #111;
-    color: #aaa;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 4px 8px;
-    border-radius: 3px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-    white-space: nowrap;
-    z-index: 9999;
-}
-#month-toggle-btn:hover + #month-toggle-tooltip,
-#month-toggle-tooltip.visible {
-    opacity: 1;
+
+.stButton > button.floating-btn:hover {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 20px rgba(204, 0, 0, 0.6);
 }
             
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Mono:wght@400;500&display=swap');
@@ -271,6 +250,24 @@ def load_data():
     return df
 
 df = load_data()
+
+# Initialize state
+if 'month_filter' not in st.session_state:
+    st.session_state.month_filter = False
+
+# Function to toggle
+def toggle_month():
+    st.session_state.month_filter = not st.session_state.month_filter
+
+# Create the floating button using a container to inject the class
+st.markdown('<div class="floating-container">', unsafe_allow_html=True)
+st.button("🗓️" if not st.session_state.month_filter else "🔙", 
+          on_click=toggle_month, 
+          key="float_btn", 
+          help="Toggle Current Month / All Time",
+          type="primary")
+# Inject the CSS class into the button we just created
+st.markdown('<style>div[data-testid="stButton"] > button:has(div:contains("🗓️")), div[data-testid="stButton"] > button:has(div:contains("🔙")) { position: fixed; bottom: 2rem; right: 2rem; width: 60px; height: 60px; border-radius: 50% !important; background: linear-gradient(135deg, #8b0000, #cc0000) !important; font-size: 24px !important; z-index: 999; }</style>', unsafe_allow_html=True)
 
 # filters
 with st.sidebar:
