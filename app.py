@@ -12,8 +12,8 @@ from styles import CSS
 from data import load_data, apply_filters, compute_kpis
 from components.header import render_header
 from components.kpis import render_kpis
-from components.charts import render_cumulative_pl, render_leaderboard, render_greed_radar, render_map
-from components.tables import render_session_wins_and_pr, render_all_time_rankings, render_session_results
+from components.charts import render_cumulative_pl, render_leaderboard
+from components.tables import render_session_wins_and_pr, render_session_results
 
 # ── Styles ─────────────────────────────────────────────────────────────────────
 st.markdown(CSS, unsafe_allow_html=True)
