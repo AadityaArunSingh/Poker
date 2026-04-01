@@ -163,23 +163,82 @@ html, body, [class*="css"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ── Month filter state ──
-try:
-    month_active = st.query_params.get("month_filter", "0") == "1"
-except:
-    month_active = False
+# ── Month filter toggle button ──
+if "month_active" not in st.session_state:
+    st.session_state.month_active = False
 
+col_btn = st.sidebar  # dummy, we use HTML button workaround below
+
+# Use a hidden Streamlit button triggered by JS
+toggle_col = st.columns([0.001, 1])[0]
+with toggle_col:
+    if st.button("toggle", key="month_toggle"):
+        st.session_state.month_active = not st.session_state.month_active
+        st.cache_data.clear()
+        st.rerun()
+
+month_active = st.session_state.month_active
 btn_emoji = "⏱️" if month_active else "🗓️"
 btn_tooltip = "Switch to all time" if month_active else "Switch to this month"
-next_val = "0" if month_active else "1"
 
 st.markdown(f"""
-<button id="float-month-btn" onclick="
-    const u = new URL(window.location.href);
-    u.searchParams.set('month_filter', '{next_val}');
-    window.location.href = u.toString();
-">{btn_emoji}</button>
-<div id="float-month-tooltip">{btn_tooltip}</div>
+<style>
+/* hide the real streamlit button but keep it clickable */
+div[data-testid="column"]:first-child button {{
+    position: fixed !important;
+    bottom: 2rem !important;
+    right: 2rem !important;
+    width: 58px !important;
+    height: 58px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #8b0000, #cc0000) !important;
+    border: none !important;
+    color: white !important;
+    font-size: 26px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 18px rgba(204,0,0,0.45) !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+    min-width: unset !important;
+    transition: transform 0.2s, box-shadow 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    width: 100% !important;
+}}
+div[data-testid="column"]:first-child button:hover {{
+    transform: scale(1.12) !important;
+    box-shadow: 0 6px 24px rgba(204,0,0,0.65) !important;
+}}
+div[data-testid="column"]:first-child button p {{
+    font-size: 26px !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}}
+div[data-testid="column"]:first-child {{
+    position: fixed !important;
+    bottom: 2rem !important;
+    right: 2rem !important;
+    width: 58px !important;
+    z-index: 9999 !important;
+    padding: 0 !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+# Update button label
+st.markdown(f"""
+<script>
+    // Rename the hidden button to the correct emoji
+    const btns = window.parent.document.querySelectorAll('button');
+    btns.forEach(b => {{
+        if (b.innerText.trim() === 'toggle') {{
+            b.innerText = '{btn_emoji}';
+            b.title = '{btn_tooltip}';
+        }}
+    }});
+</script>
 """, unsafe_allow_html=True)
 
 # ── Plotly dark template ──
@@ -218,9 +277,10 @@ if month_active:
         (df["Date"].dt.date >= month_start) &
         (df["Date"].dt.date <= today)
     ]
-    st.toast(f"📅 {today.strftime('%B %Y')} only", icon="🗓️")
+    st.toast(f"📅 {today.strftime('%B %Y')} only — data refreshed", icon="🗓️")
 else:
     df_f = df.copy()
+    st.toast("⏱️ Showing all time — data refreshed", icon="⏱️") if st.session_state.get("just_toggled") else None
 
 # ── Qualified players based on full dataset ──
 qualified = df.groupby("Name")["Date"].nunique()
