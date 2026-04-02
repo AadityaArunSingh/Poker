@@ -15,7 +15,7 @@ def render_session_wins_and_pr(df_f):
     pr = (
         df_f.groupby("Name")["P/L"].max()
         .reset_index()
-        .rename(columns={"Name": "Player", "P/L": "Best Session"})
+        .rename(columns={"Name": "Player", "P/L": "Biggest Bag💰"})
     )
 
     combined = (
@@ -23,7 +23,7 @@ def render_session_wins_and_pr(df_f):
         .sort_values("Sessions MVP", ascending=False)
         .reset_index(drop=True)
     )
-    combined["Best Session"] = combined["Best Session"].apply(lambda x: f"₹{x:+,.0f}")
+    combined["Biggest Bag💰"] = combined["Biggest Bag💰"].apply(lambda x: f"₹{x:+,.0f}")
 
     def colour_combined(val):
         if isinstance(val, (int, float)) and val == combined["Sessions MVP"].max():
@@ -34,7 +34,7 @@ def render_session_wins_and_pr(df_f):
 
     st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins & PR</div>', unsafe_allow_html=True)
     st.dataframe(
-        combined.style.applymap(colour_combined, subset=["Sessions MVP", "Best Session"]),
+        combined.style.applymap(colour_combined, subset=["Sessions MVP", "Biggest Bag💰"]),
         use_container_width=True, hide_index=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
