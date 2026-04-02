@@ -10,7 +10,7 @@ def _colour_pl(val):
 def render_session_wins_and_pr(df_f):
     session_winners = df_f.loc[df_f.groupby("Date")["P/L"].idxmax()]["Name"]
     wins_count = session_winners.value_counts().reset_index()
-    wins_count.columns = ["Player", "Sessions Won"]
+    wins_count.columns = ["Player", "Sessions MVP"]
 
     pr = (
         df_f.groupby("Name")["P/L"].max()
@@ -20,13 +20,13 @@ def render_session_wins_and_pr(df_f):
 
     combined = (
         wins_count.merge(pr, on="Player")
-        .sort_values("Sessions Won", ascending=False)
+        .sort_values("Sessions MVP", ascending=False)
         .reset_index(drop=True)
     )
     combined["Best Session"] = combined["Best Session"].apply(lambda x: f"₹{x:+,.0f}")
 
     def colour_combined(val):
-        if isinstance(val, (int, float)) and val == combined["Sessions Won"].max():
+        if isinstance(val, (int, float)) and val == combined["Sessions MVP"].max():
             return "color: #cc0000; font-weight: bold"
         if isinstance(val, str) and val.startswith("₹"):
             return "color: #cc0000; font-weight: bold"
@@ -34,7 +34,7 @@ def render_session_wins_and_pr(df_f):
 
     st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins & PR</div>', unsafe_allow_html=True)
     st.dataframe(
-        combined.style.applymap(colour_combined, subset=["Sessions Won", "Best Session"]),
+        combined.style.applymap(colour_combined, subset=["Sessions MVP", "Best Session"]),
         use_container_width=True, hide_index=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
