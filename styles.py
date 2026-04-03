@@ -146,7 +146,6 @@ html, body, [class*="css"] {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #8b0000; border-radius: 2px; }
-</style>
 /* ── Mobile (iPhone) ── */
 @media (max-width: 768px) {
 
@@ -183,5 +182,5 @@ html, body, [class*="css"] {
         overflow-x: hidden !important;
     }
 }
-
+</style>
 """
