@@ -147,4 +147,41 @@ html, body, [class*="css"] {
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: #8b0000; border-radius: 2px; }
 </style>
+/* ── Mobile (iPhone) ── */
+@media (max-width: 768px) {
+
+    /* Title */
+    .hero-title {
+        font-size: 2rem !important;
+        letter-spacing: 0.02em !important;
+    }
+    .hero-subtitle {
+        font-size: 0.65rem !important;
+    }
+
+    /* KPIs — stack 2x2, centre everything */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+    }
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        min-width: 45% !important;
+        flex: 1 1 45% !important;
+    }
+    [data-testid="stMetric"] {
+        text-align: center !important;
+    }
+
+    /* Charts — give them breathing room */
+    [data-testid="stPlotlyChart"] {
+        min-height: 300px !important;
+    }
+
+    /* Prevent horizontal overflow everywhere */
+    .main .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        overflow-x: hidden !important;
+    }
+}
+
 """

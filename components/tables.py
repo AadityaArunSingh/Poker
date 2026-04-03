@@ -30,7 +30,7 @@ def render_session_wins_and_pr(df_f):
             return "color: #cc0000; font-weight: bold"
         if isinstance(val, str) and val.startswith("₹"):
             return "color: #cc0000; font-weight: bold"
-        return "color: #f0f0f0"
+        return "color: #888888"
 
     st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins & PR</div>', unsafe_allow_html=True)
     st.dataframe(
