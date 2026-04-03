@@ -27,6 +27,27 @@ except Exception:
 # ── Data ───────────────────────────────────────────────────────────────────────
 df   = load_data()
 df_f = apply_filters(df, month_active)
+
+# Apply sidebar filters on top
+all_players = sorted(df["Name"].unique())
+selected_players = st.sidebar.multiselect("Players", all_players, default=all_players)
+all_dates = sorted(df["Date"].dt.date.unique())
+date_range = st.sidebar.date_input(
+    "Date Range",
+    value=(min(all_dates), max(all_dates)),
+    min_value=min(all_dates),
+    max_value=max(all_dates),
+)
+if len(date_range) == 2:
+    start, end = date_range
+    df_f = df_f[
+        (df_f["Name"].isin(selected_players)) &
+        (df_f["Date"].dt.date >= start) &
+        (df_f["Date"].dt.date <= end)
+    ]
+else:
+    df_f = df_f[df_f["Name"].isin(selected_players)]
+
 kpis = compute_kpis(df_f)
 
 if month_active:
@@ -35,15 +56,6 @@ if month_active:
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<div class="sidebar-heading">♠ Filters</div>', unsafe_allow_html=True)
-    all_players = sorted(df["Name"].unique())
-    selected_players = st.multiselect("Players", all_players, default=all_players)
-    all_dates = sorted(df["Date"].dt.date.unique())
-    date_range = st.date_input(
-        "Date Range",
-        value=(min(all_dates), max(all_dates)),
-        min_value=min(all_dates),
-        max_value=max(all_dates),
-    )
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔄 Refresh Data"):
         st.cache_data.clear()
