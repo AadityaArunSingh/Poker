@@ -34,7 +34,7 @@ def render_session_wins_and_pr(df_f):
 
     st.markdown('<div class="chart-card"><div class="chart-card-title">♥ Session Wins & PR</div>', unsafe_allow_html=True)
     st.dataframe(
-        combined.style.applymap(colour_combined, subset=["Sessions MVP", "Biggest Bag💰"]),
+        combined.style.map(colour_combined, subset=["Sessions MVP", "Biggest Bag💰"]),
         use_container_width=True, hide_index=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
@@ -59,7 +59,7 @@ def render_all_time_rankings(df_f):
 
     st.markdown('<div class="chart-card"><div class="chart-card-title">♠ All-Time Profit Rankings</div>', unsafe_allow_html=True)
     st.dataframe(
-        all_profits.style.applymap(colour_rank, subset=["Rank"]),
+        all_profits.style.map(colour_rank, subset=["Rank"]),
         use_container_width=True, hide_index=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
@@ -85,7 +85,7 @@ def render_session_results(df_f):
         unsafe_allow_html=True,
     )
     st.dataframe(
-        session_df.style.applymap(_colour_pl, subset=["P/L"]),
+        session_df.style.map(_colour_pl, subset=["P/L"]),
         use_container_width=True, hide_index=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
