@@ -23,6 +23,7 @@ def render_session_wins_and_pr(df_f):
         .sort_values("Sessions MVP", ascending=False)
         .reset_index(drop=True)
     )
+    combined = combined.rename(columns={"Sessions Won": "Sessions MVP", "Best Session": "Biggest Bag💰"})
     combined["Biggest Bag💰"] = combined["Biggest Bag💰"].apply(lambda x: f"₹{x:+,.0f}")
 
     def colour_combined(val):
