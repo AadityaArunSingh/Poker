@@ -16,6 +16,63 @@ from components.tables import render_session_wins_and_pr, render_session_results
 
 st.markdown(CSS, unsafe_allow_html=True)
 
+# ── One-time popup per session ────────────────────────────────────────────────
+if "popup_dismissed" not in st.session_state:
+    st.session_state.popup_dismissed = False
+
+if not st.session_state.popup_dismissed:
+    st.markdown("""
+    <div id="popup-overlay" style="
+        position:fixed; top:0; left:0; width:100vw; height:100vh;
+        background:rgba(0,0,0,0.85); z-index:99999;
+        display:flex; align-items:center; justify-content:center;
+    ">
+        <div style="
+            background:linear-gradient(160deg,#111111,#0d0505);
+            border:1px solid #1f0a0a; border-top:3px solid #cc0000;
+            border-radius:10px; padding:2.5rem 3rem; max-width:420px;
+            text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.8);
+        ">
+            <div style="font-size:2.5rem; margin-bottom:1rem">🎰</div>
+            <div style="font-family:'Playfair Display',serif;font-size:1.6rem;
+                color:#ffffff;font-weight:900;margin-bottom:0.5rem">
+                Free Buy-in Wheel
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:0.75rem;
+                color:#666;letter-spacing:0.1em;text-transform:uppercase;
+                margin-bottom:1.5rem">
+                Play 5+ sessions this month · Win ₹200
+            </div>
+            <div style="font-family:'DM Mono',monospace;font-size:0.8rem;
+                color:#aaa;margin-bottom:2rem;line-height:1.6">
+                Every month, the highest profit player spins the wheel.<br>
+                Whoever it lands on gets a free ₹200 buy-in. 🃏
+            </div>
+            <div style="display:flex;gap:1rem;justify-content:center">
+                <a href="/wheel" target="_self" style="
+                    background:linear-gradient(135deg,#8b0000,#cc0000);
+                    color:white; text-decoration:none;
+                    font-family:'DM Mono',monospace;
+                    font-size:0.75rem;letter-spacing:0.1em;
+                    text-transform:uppercase;
+                    padding:0.7rem 1.5rem; border-radius:4px;
+                    box-shadow:0 4px 16px rgba(204,0,0,0.4);
+                ">Spin the Wheel 🎡</a>
+                <button onclick="document.getElementById('popup-overlay').style.display='none'"
+                style="
+                    background:transparent; color:#555;
+                    border:1px solid #2a0a0a; border-radius:4px;
+                    font-family:'DM Mono',monospace;
+                    font-size:0.75rem;letter-spacing:0.1em;
+                    text-transform:uppercase;
+                    padding:0.7rem 1.5rem; cursor:pointer;
+                ">Maybe Later</button>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.session_state.popup_dismissed = True
+
 # ── Read state before anything renders ────────────────────────────────────────
 try:
     month_active = st.query_params.get("month_filter", "0") == "1"
