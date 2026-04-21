@@ -43,12 +43,11 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.toggle("🗓️ This Month Only", value=month_active, key="month_toggle"):
-        st.query_params["month_filter"] = "1"
-        month_active = True
-    else:
-        st.query_params["month_filter"] = "0"
-        month_active = False
+    btn_label = "📅 This Month Only ✓" if month_active else "📅 This Month Only"
+    if st.button(btn_label, key="month_toggle"):
+        new_val = "0" if month_active else "1"
+        st.query_params["month_filter"] = new_val
+        st.rerun()
 
     st.markdown('<hr style="border-color:#1f0a0a">', unsafe_allow_html=True)
     st.markdown(
